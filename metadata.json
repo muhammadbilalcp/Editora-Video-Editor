@@ -1,0 +1,6 @@
+{
+  "name": "Editora AI Video Editor",
+  "description": "Mobile-first full-featured video editor for EDITORA, featuring multi-track timeline, ElevenLabs AI Voice, Pexels media, GIPHY stickers, and Firebase autosave.",
+  "requestFramePermissions": ["microphone", "camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
