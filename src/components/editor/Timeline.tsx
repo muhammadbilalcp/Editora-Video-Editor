@@ -33,6 +33,7 @@ export const Timeline: React.FC = () => {
     setProject,
     currentTime,
     setCurrentTime,
+    isPlaying,
     selectedClipId,
     setSelectedClipId,
     splitClipAtPlayhead,
@@ -60,19 +61,28 @@ export const Timeline: React.FC = () => {
 
   const totalWidthPx = Math.max(project.duration * zoomLevel, 600);
 
-  // Handle Playhead Scrubbing on Timeline Header
+  // Handle Playhead Scrubbing on Timeline Header or Background
   const handleTimelineClick = (e: React.MouseEvent) => {
     if (!timelineRef.current) return;
     const rect = timelineRef.current.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
+    const clickX = e.clientX - rect.left + timelineRef.current.scrollLeft;
     const clickedTime = Math.max(0, Math.min(clickX / zoomLevel, project.duration));
     setCurrentTime(clickedTime);
   };
 
   const handleScrubStart = (e: React.MouseEvent) => {
+    // Only scrub if clicking on ruler or track background, not on buttons/clips directly
     setIsScrubbing(true);
     handleTimelineClick(e);
   };
+
+  // Auto-scroll timeline to keep playhead centered during playback
+  useEffect(() => {
+    if (timelineRef.current && isPlaying) {
+      const targetScroll = currentTime * zoomLevel - timelineRef.current.clientWidth / 2;
+      timelineRef.current.scrollLeft = Math.max(0, targetScroll);
+    }
+  }, [currentTime, isPlaying, zoomLevel]);
 
   // Window-wide Mouse Move / Up Listeners for Trim and Scrubbing
   useEffect(() => {
@@ -81,7 +91,7 @@ export const Timeline: React.FC = () => {
     const handleWindowMouseMove = (e: MouseEvent) => {
       if (isScrubbing && timelineRef.current) {
         const rect = timelineRef.current.getBoundingClientRect();
-        const clickX = e.clientX - rect.left;
+        const clickX = e.clientX - rect.left + timelineRef.current.scrollLeft;
         const clickedTime = Math.max(0, Math.min(clickX / zoomLevel, project.duration));
         setCurrentTime(clickedTime);
       } else if (draggingTrim) {
