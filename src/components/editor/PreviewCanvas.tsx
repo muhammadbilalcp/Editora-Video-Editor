@@ -104,8 +104,11 @@ export const PreviewCanvas: React.FC = () => {
             clip.transform.flipV ? -clip.transform.scale : clip.transform.scale
           );
 
-          // Color & Filter Adjustments
+          // Color & Filter Adjustments & Opacity
+          ctx.globalAlpha = clip.colorAdjustments?.opacity !== undefined ? clip.colorAdjustments.opacity : 1;
           ctx.filter = buildCssFilterString(clip.colorAdjustments, clip.filter);
+
+          const crop = clip.transform.crop;
 
           if (clip.type === 'video') {
             const vid = mediaCacheRef.current.get(clip.id) as HTMLVideoElement;
@@ -114,12 +117,38 @@ export const PreviewCanvas: React.FC = () => {
               if (Math.abs(vid.currentTime - targetTime) > 0.15) {
                 vid.currentTime = targetTime;
               }
-              ctx.drawImage(vid, -canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
+
+              // Audio sync for video
+              vid.volume = track.muted || clip.audioSettings?.muted ? 0 : (clip.audioSettings?.volume ?? 1);
+              vid.playbackRate = clip.speed || 1;
+              if (isPlaying && vid.paused && !track.muted && !clip.audioSettings?.muted) {
+                vid.play().catch(() => {});
+              } else if (!isPlaying && !vid.paused) {
+                vid.pause();
+              }
+
+              if (crop && (crop.width < 100 || crop.height < 100 || crop.x > 0 || crop.y > 0)) {
+                const sx = (crop.x / 100) * vid.videoWidth;
+                const sy = (crop.y / 100) * vid.videoHeight;
+                const sw = (crop.width / 100) * vid.videoWidth;
+                const sh = (crop.height / 100) * vid.videoHeight;
+                ctx.drawImage(vid, sx, sy, sw, sh, -canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
+              } else {
+                ctx.drawImage(vid, -canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
+              }
             }
           } else if (clip.type === 'image' || clip.type === 'giphy') {
             const img = mediaCacheRef.current.get(clip.id) as HTMLImageElement;
             if (img && img.complete) {
-              ctx.drawImage(img, -canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
+              if (crop && (crop.width < 100 || crop.height < 100 || crop.x > 0 || crop.y > 0)) {
+                const sx = (crop.x / 100) * img.naturalWidth;
+                const sy = (crop.y / 100) * img.naturalHeight;
+                const sw = (crop.width / 100) * img.naturalWidth;
+                const sh = (crop.height / 100) * img.naturalHeight;
+                ctx.drawImage(img, sx, sy, sw, sh, -canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
+              } else {
+                ctx.drawImage(img, -canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
+              }
             }
           }
 
@@ -144,7 +173,7 @@ export const PreviewCanvas: React.FC = () => {
         }
       });
     });
-  }, [project, currentTime]);
+  }, [project, currentTime, isPlaying]);
 
   // Playback Animation Loop
   const requestRef = useRef<number | null>(null);

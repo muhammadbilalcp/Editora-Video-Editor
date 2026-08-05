@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useEditor } from '../../context/EditorContext';
 import { formatTimecode } from '../../utils/time';
 import { CapCutToolbar } from './CapCutToolbar';
@@ -74,26 +74,42 @@ export const Timeline: React.FC = () => {
     handleTimelineClick(e);
   };
 
-  const handleScrubMove = (e: React.MouseEvent) => {
-    if (isScrubbing) {
-      handleTimelineClick(e);
-    } else if (draggingTrim) {
-      const dx = (e.clientX - draggingTrim.initialX) / zoomLevel;
-      if (draggingTrim.side === 'left') {
-        const newStart = Math.max(0, draggingTrim.initialStart + dx);
-        const newDur = Math.max(0.5, draggingTrim.initialDuration - dx);
-        trimClip(draggingTrim.clipId, newStart, newDur);
-      } else {
-        const newDur = Math.max(0.5, draggingTrim.initialDuration + dx);
-        trimClip(draggingTrim.clipId, draggingTrim.initialStart, newDur);
-      }
-    }
-  };
+  // Window-wide Mouse Move / Up Listeners for Trim and Scrubbing
+  useEffect(() => {
+    if (!isScrubbing && !draggingTrim) return;
 
-  const handleScrubEnd = () => {
-    setIsScrubbing(false);
-    setDraggingTrim(null);
-  };
+    const handleWindowMouseMove = (e: MouseEvent) => {
+      if (isScrubbing && timelineRef.current) {
+        const rect = timelineRef.current.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const clickedTime = Math.max(0, Math.min(clickX / zoomLevel, project.duration));
+        setCurrentTime(clickedTime);
+      } else if (draggingTrim) {
+        const dx = (e.clientX - draggingTrim.initialX) / zoomLevel;
+        if (draggingTrim.side === 'left') {
+          const newStart = Math.max(0, draggingTrim.initialStart + dx);
+          const newDur = Math.max(0.5, draggingTrim.initialDuration - dx);
+          trimClip(draggingTrim.clipId, newStart, newDur);
+        } else {
+          const newDur = Math.max(0.5, draggingTrim.initialDuration + dx);
+          trimClip(draggingTrim.clipId, draggingTrim.initialStart, newDur);
+        }
+      }
+    };
+
+    const handleWindowMouseUp = () => {
+      setIsScrubbing(false);
+      setDraggingTrim(null);
+    };
+
+    window.addEventListener('mousemove', handleWindowMouseMove);
+    window.addEventListener('mouseup', handleWindowMouseUp);
+
+    return () => {
+      window.removeEventListener('mousemove', handleWindowMouseMove);
+      window.removeEventListener('mouseup', handleWindowMouseUp);
+    };
+  }, [isScrubbing, draggingTrim, zoomLevel, project.duration, setCurrentTime, trimClip]);
 
   // Toggle Track Visibility / Mute / Lock
   const toggleTrackMute = (trackId: string) => {
@@ -112,9 +128,6 @@ export const Timeline: React.FC = () => {
 
   return (
     <div
-      onMouseMove={handleScrubMove}
-      onMouseUp={handleScrubEnd}
-      onMouseLeave={handleScrubEnd}
       className={`h-72 md:h-80 border-t flex flex-col select-none shrink-0 z-20 ${
         theme === 'light' ? 'bg-slate-100 border-slate-300 text-slate-900' : 'bg-neutral-900 border-neutral-800 text-white'
       }`}
