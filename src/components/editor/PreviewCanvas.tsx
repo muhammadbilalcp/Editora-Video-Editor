@@ -86,13 +86,22 @@ export const PreviewCanvas: React.FC = () => {
 
     // Render active tracks bottom to top
     project.tracks.forEach((track) => {
-      if (track.hidden) return;
-
       track.clips.forEach((clip) => {
-        if (currentTime >= clip.startTime && currentTime <= clip.startTime + clip.duration) {
-          const clipElapsed = currentTime - clip.startTime;
+        const isActive = !track.hidden && currentTime >= clip.startTime && currentTime <= clip.startTime + clip.duration;
 
-          ctx.save();
+        if (!isActive) {
+          if (clip.type === 'video') {
+            const vid = mediaCacheRef.current.get(clip.id) as HTMLVideoElement;
+            if (vid && !vid.paused) {
+              vid.pause();
+            }
+          }
+          return;
+        }
+
+        const clipElapsed = currentTime - clip.startTime;
+
+        ctx.save();
 
           // Transform Calculations (Position, Scale, Rotate, Flip)
           const centerX = canvas.width / 2 + (clip.transform.x / 100) * canvas.width;
@@ -115,17 +124,25 @@ export const PreviewCanvas: React.FC = () => {
             const vid = mediaCacheRef.current.get(clip.id) as HTMLVideoElement;
             if (vid && vid.readyState >= 2) {
               const targetTime = clip.sourceStart + clipElapsed * clip.speed;
-              if (Math.abs(vid.currentTime - targetTime) > 0.15) {
-                vid.currentTime = targetTime;
-              }
 
-              // Audio sync for video
-              vid.volume = track.muted || clip.audioSettings?.muted ? 0 : (clip.audioSettings?.volume ?? 1);
-              vid.playbackRate = clip.speed || 1;
-              if (isPlaying && vid.paused && !track.muted && !clip.audioSettings?.muted) {
-                vid.play().catch(() => {});
-              } else if (!isPlaying && !vid.paused) {
-                vid.pause();
+              // Smooth real-time playback handling without seeking jitter
+              if (!isPlaying) {
+                if (Math.abs(vid.currentTime - targetTime) > 0.05) {
+                  vid.currentTime = targetTime;
+                }
+                if (!vid.paused) vid.pause();
+              } else {
+                vid.playbackRate = clip.speed || 1;
+                vid.volume = track.muted || clip.audioSettings?.muted ? 0 : (clip.audioSettings?.volume ?? 1);
+
+                // Only seek if playhead drifted dramatically (>0.4s) to avoid seeking stutter
+                if (Math.abs(vid.currentTime - targetTime) > 0.4) {
+                  vid.currentTime = targetTime;
+                }
+
+                if (vid.paused && !track.muted && !clip.audioSettings?.muted) {
+                  vid.play().catch(() => {});
+                }
               }
 
               if (crop && (crop.width < 100 || crop.height < 100 || crop.x > 0 || crop.y > 0)) {
@@ -171,7 +188,6 @@ export const PreviewCanvas: React.FC = () => {
               clip.duration
             );
           }
-        }
       });
     });
   }, [project, currentTime, isPlaying]);

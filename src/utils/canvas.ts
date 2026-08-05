@@ -1,6 +1,23 @@
 import { AspectRatio, Clip, ColorAdjustments, ChromaKeySettings, TextSettings } from '../types/editor';
 
-export function getCanvasDimensions(aspectRatio: AspectRatio): { width: number; height: number } {
+export function getCanvasDimensions(aspectRatio: AspectRatio, isExport: boolean = false): { width: number; height: number } {
+  if (!isExport) {
+    // Optimized preview canvas resolution (butter smooth 60fps rendering)
+    switch (aspectRatio) {
+      case '9:16':
+        return { width: 540, height: 960 };
+      case '16:9':
+        return { width: 960, height: 540 };
+      case '1:1':
+        return { width: 720, height: 720 };
+      case '4:5':
+        return { width: 576, height: 720 };
+      default:
+        return { width: 540, height: 960 };
+    }
+  }
+
+  // Full high resolution for export rendering
   switch (aspectRatio) {
     case '9:16':
       return { width: 1080, height: 1920 };
@@ -15,55 +32,55 @@ export function getCanvasDimensions(aspectRatio: AspectRatio): { width: number; 
   }
 }
 
-export function buildCssFilterString(color: ColorAdjustments, presetFilter: string): string {
+export function buildCssFilterString(color?: ColorAdjustments, presetFilter?: string): string {
+  if (!color && (!presetFilter || presetFilter === 'none')) return 'none';
   const parts: string[] = [];
 
-  // Brightness: -100 to 100 => 0% to 200%
-  const brightnessVal = 100 + color.brightness;
-  parts.push(`brightness(${brightnessVal}%)`);
-
-  // Contrast: -100 to 100 => 0% to 200%
-  const contrastVal = 100 + color.contrast;
-  parts.push(`contrast(${contrastVal}%)`);
-
-  // Saturation: -100 to 100 => 0% to 200%
-  const satVal = 100 + color.saturation;
-  parts.push(`saturate(${satVal}%)`);
-
-  if (color.blur > 0) {
-    parts.push(`blur(${color.blur}px)`);
+  if (color) {
+    if (color.brightness && color.brightness !== 0) {
+      parts.push(`brightness(${100 + color.brightness}%)`);
+    }
+    if (color.contrast && color.contrast !== 0) {
+      parts.push(`contrast(${100 + color.contrast}%)`);
+    }
+    if (color.saturation && color.saturation !== 0) {
+      parts.push(`saturate(${100 + color.saturation}%)`);
+    }
+    if (color.blur && color.blur > 0) {
+      parts.push(`blur(${color.blur}px)`);
+    }
+    if (color.hueRotate && color.hueRotate !== 0) {
+      parts.push(`hue-rotate(${color.hueRotate}deg)`);
+    }
   }
 
-  if (color.hueRotate) {
-    parts.push(`hue-rotate(${color.hueRotate}deg)`);
+  if (presetFilter && presetFilter !== 'none') {
+    switch (presetFilter) {
+      case 'cinematic':
+        parts.push('contrast(115%) saturate(120%) sepia(10%)');
+        break;
+      case 'vintage':
+        parts.push('sepia(45%) contrast(90%) brightness(105%)');
+        break;
+      case 'cyberpunk':
+        parts.push('hue-rotate(180deg) saturate(180%) contrast(125%)');
+        break;
+      case 'bw':
+        parts.push('grayscale(100%) contrast(120%)');
+        break;
+      case 'warm':
+        parts.push('sepia(25%) saturate(120%) brightness(105%)');
+        break;
+      case 'cold':
+        parts.push('hue-rotate(200deg) saturate(110%) brightness(95%)');
+        break;
+      case 'drama':
+        parts.push('contrast(140%) saturate(130%) brightness(90%)');
+        break;
+    }
   }
 
-  // Presets
-  switch (presetFilter) {
-    case 'cinematic':
-      parts.push('contrast(115%) saturate(120%) sepia(10%)');
-      break;
-    case 'vintage':
-      parts.push('sepia(45%) contrast(90%) brightness(105%)');
-      break;
-    case 'cyberpunk':
-      parts.push('hue-rotate(180deg) saturate(180%) contrast(125%)');
-      break;
-    case 'bw':
-      parts.push('grayscale(100%) contrast(120%)');
-      break;
-    case 'warm':
-      parts.push('sepia(25%) saturate(120%) brightness(105%)');
-      break;
-    case 'cold':
-      parts.push('hue-rotate(200deg) saturate(110%) brightness(95%)');
-      break;
-    case 'drama':
-      parts.push('contrast(140%) saturate(130%) brightness(90%)');
-      break;
-  }
-
-  return parts.join(' ');
+  return parts.length > 0 ? parts.join(' ') : 'none';
 }
 
 export function applyChromaKey(

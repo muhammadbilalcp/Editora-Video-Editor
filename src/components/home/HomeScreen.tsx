@@ -208,24 +208,33 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenAuth }) => {
               Multi-track timeline, local photo/video uploads, stock HD media, voiceover recording, crop tools, filters, and pro-grade editing precision.
             </p>
 
-            {project && (
-              <div className="mt-5 flex items-center gap-3">
+            <div className="mt-6 flex flex-wrap items-center gap-3">
+              {/* Big Prominent New Project Button */}
+              <button
+                onClick={() => {
+                  createNewProject('New Story', '9:16');
+                  setViewMode('editor');
+                }}
+                className="flex items-center gap-2.5 bg-rose-500 hover:bg-rose-600 text-white font-black text-sm md:text-base px-7 py-3.5 rounded-2xl shadow-xl hover:shadow-rose-500/25 transition transform active:scale-95 cursor-pointer"
+              >
+                <Plus className="w-5 h-5 stroke-[3]" />
+                <span>+ New Project</span>
+              </button>
+
+              {project && (
                 <button
-                  onClick={() => {
-                    if (!user) {
-                      onOpenAuth();
-                      showToast('Please sign up or sign in to open the editor studio!');
-                      return;
-                    }
-                    setViewMode('editor');
-                  }}
-                  className="flex items-center gap-2 bg-white hover:bg-neutral-200 text-neutral-950 font-extrabold text-xs px-5 py-2.5 rounded-xl shadow-md transition transform active:scale-95"
+                  onClick={() => setViewMode('editor')}
+                  className={`flex items-center gap-2 font-bold text-xs px-5 py-3.5 rounded-2xl border transition transform active:scale-95 ${
+                    theme === 'light'
+                      ? 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-800'
+                      : 'bg-neutral-800 hover:bg-neutral-700 border-neutral-700 text-neutral-200'
+                  }`}
                 >
-                  <Play className="w-4 h-4 fill-current" />
-                  <span>Continue Editing: "{project.name}"</span>
+                  <Play className="w-4 h-4 fill-current text-rose-500" />
+                  <span>Open Recent: "{project.name}"</span>
                 </button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
 
