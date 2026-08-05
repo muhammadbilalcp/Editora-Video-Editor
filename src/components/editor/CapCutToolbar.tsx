@@ -76,7 +76,9 @@ export const CapCutToolbar: React.FC = () => {
   // Main Mode Bottom Navigation Bar (Image 4 bottom row)
   if (!selectedClip) {
     const mainTools = [
+      { id: 'split', label: 'Split', icon: Scissors, onClick: () => splitClipAtPlayhead() },
       { id: 'edit', label: 'Edit', icon: Scissors, onClick: handleEditClick },
+      { id: 'extract', label: 'Extract audio', icon: Music, onClick: () => extractAudioFromClip() },
       { id: 'audio', label: 'Audio', icon: Music, onClick: () => setActivePanel('voice') },
       { id: 'text', label: 'Text', icon: Type, onClick: () => setActivePanel('text') },
       { id: 'effects', label: 'Effects', icon: Sparkles, onClick: () => setActivePanel('inspector') },

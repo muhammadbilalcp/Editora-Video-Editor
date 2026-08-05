@@ -116,11 +116,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenAuth }) => {
   ];
 
   return (
-    <div className={`min-h-screen w-full flex flex-col font-['Plus_Jakarta_Sans'] select-none transition-colors duration-200 ${
+    <div className={`h-screen w-full flex flex-col font-['Plus_Jakarta_Sans'] select-none overflow-hidden transition-colors duration-200 ${
       theme === 'light' ? 'bg-slate-50 text-slate-900' : 'bg-neutral-950 text-white'
     }`}>
       {/* Home Header */}
-      <header className={`h-16 px-4 md:px-8 border-b flex items-center justify-between sticky top-0 z-40 backdrop-blur-md ${
+      <header className={`h-16 shrink-0 px-4 md:px-8 border-b flex items-center justify-between z-40 backdrop-blur-md ${
         theme === 'light' ? 'bg-white/80 border-slate-200' : 'bg-neutral-900/80 border-neutral-800'
       }`}>
         <div className="flex items-center gap-3">
@@ -193,7 +193,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenAuth }) => {
       </header>
 
       {/* Main Home Content Container */}
-      <main className="flex-1 max-w-6xl w-full mx-auto p-4 md:p-8 space-y-8">
+      <main className="flex-1 overflow-y-auto max-w-6xl w-full mx-auto p-4 md:p-8 space-y-8">
         {/* Welcome Banner */}
         <div className={`p-6 md:p-8 rounded-3xl border relative overflow-hidden shadow-2xl ${
           theme === 'light'
@@ -203,13 +203,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenAuth }) => {
           <div className="relative z-10 max-w-2xl">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-neutral-800 border border-neutral-700 text-white text-xs font-bold mb-3">
               <Zap className="w-3.5 h-3.5" />
-              <span>Editora Pro AI Video Studio</span>
+              <span>Editora - The Photo And Video Editor</span>
             </div>
             <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight mb-2">
-              Create Viral Videos in Seconds
+              Create Photos & Videos in Seconds
             </h1>
             <p className={`text-xs md:text-sm ${theme === 'light' ? 'text-slate-600' : 'text-neutral-400'}`}>
-              Multi-track timeline, Stock HD media, GIF stickers, AI Text-to-Speech voices, Chroma Key green screen, and pro-grade editing precision.
+              Multi-track timeline, local photo/video uploads, stock HD media, voiceover recording, crop tools, filters, and pro-grade editing precision.
             </p>
 
             {project && (

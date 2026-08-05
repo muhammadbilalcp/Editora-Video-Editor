@@ -374,10 +374,29 @@ export const EditorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     showToast('Removed clip');
   };
 
-  const splitClipAtPlayhead = (clipId: string) => {
+  const splitClipAtPlayhead = (clipId?: string) => {
     updateProjectState((prev) => {
+      let targetClipId = clipId || selectedClipId;
+
+      // Auto find clip under playhead if no clip is explicitly targeted
+      if (!targetClipId) {
+        for (const track of prev.tracks) {
+          const found = track.clips.find(
+            (c) => currentTime > c.startTime && currentTime < c.startTime + c.duration
+          );
+          if (found) {
+            targetClipId = found.id;
+            break;
+          }
+        }
+      }
+
+      if (!targetClipId) {
+        return prev;
+      }
+
       const newTracks = prev.tracks.map((track) => {
-        const targetClip = track.clips.find((c) => c.id === clipId);
+        const targetClip = track.clips.find((c) => c.id === targetClipId);
         if (!targetClip) return track;
 
         // Ensure playhead is within clip bounds
@@ -402,7 +421,7 @@ export const EditorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           sourceDuration: (targetClip.duration - splitOffset) * targetClip.speed,
         };
 
-        const updatedClips = track.clips.flatMap((c) => (c.id === clipId ? [leftClip, rightClip] : [c]));
+        const updatedClips = track.clips.flatMap((c) => (c.id === targetClipId ? [leftClip, rightClip] : [c]));
         return { ...track, clips: updatedClips };
       });
 
@@ -432,18 +451,35 @@ export const EditorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }));
   };
 
-  const extractAudioFromClip = (clipId: string) => {
+  const extractAudioFromClip = (clipId?: string) => {
     updateProjectState((prev) => {
+      let targetClipId = clipId || selectedClipId;
+      if (!targetClipId) {
+        for (const track of prev.tracks) {
+          const found = track.clips.find(
+            (c) => (c.type === 'video' || c.type === 'media') && currentTime >= c.startTime && currentTime <= c.startTime + c.duration
+          );
+          if (found) {
+            targetClipId = found.id;
+            break;
+          }
+        }
+      }
+
+      if (!targetClipId) {
+        return prev;
+      }
+
       let extractedClip: Clip | null = null;
 
       const newTracks = prev.tracks.map((tr) => {
-        const target = tr.clips.find((c) => c.id === clipId);
+        const target = tr.clips.find((c) => c.id === targetClipId);
         if (target) {
           extractedClip = target;
           // Mute original video clip's audio
           return {
             ...tr,
-            clips: tr.clips.map((c) => (c.id === clipId ? { ...c, audioSettings: { ...c.audioSettings, muted: true, volume: 0 } } : c)),
+            clips: tr.clips.map((c) => (c.id === targetClipId ? { ...c, audioSettings: { ...c.audioSettings, muted: true, volume: 0 } } : c)),
           };
         }
         return tr;
@@ -458,15 +494,15 @@ export const EditorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         id: 'clip_audio_' + Date.now(),
         trackId: audioTrack.id,
         type: 'audio',
-        name: `Audio from ${extractedClip.name}`,
-        audioSettings: { volume: 1, muted: false, fadeIn: 0, fadeOut: 0, speed: extractedClip.speed },
+        name: `Audio from ${(extractedClip as Clip).name}`,
+        audioSettings: { volume: 1, muted: false, fadeIn: 0, fadeOut: 0, speed: (extractedClip as Clip).speed },
       };
 
       const finalTracks = newTracks.map((t) => (t.id === audioTrack.id ? { ...t, clips: [...t.clips, audioCopy] } : t));
       return { ...prev, tracks: finalTracks };
     });
 
-    showToast('Extracted audio to new music track');
+    showToast('Extracted audio to audio track');
   };
 
   const duplicateClip = (clipId: string) => {

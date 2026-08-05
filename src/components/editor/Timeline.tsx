@@ -251,13 +251,14 @@ export const Timeline: React.FC = () => {
         </div>
 
         {/* Timeline Tracks & Scrubber (Right Column) */}
-        <div className="flex-1 overflow-x-auto overflow-y-auto relative" ref={timelineRef}>
+        <div
+          className="flex-1 overflow-x-auto overflow-y-auto relative"
+          ref={timelineRef}
+          onMouseDown={handleScrubStart}
+        >
           <div style={{ width: `${totalWidthPx}px` }} className="relative min-h-full">
             {/* Time Ruler Bar */}
-            <div
-              onMouseDown={handleScrubStart}
-              className="h-7 border-b border-neutral-800 bg-neutral-900/80 sticky top-0 z-20 cursor-pointer flex items-center"
-            >
+            <div className="h-7 border-b border-neutral-800 bg-neutral-900/80 sticky top-0 z-20 cursor-pointer flex items-center">
               {Array.from({ length: Math.ceil(project.duration) + 1 }).map((_, i) => (
                 <div
                   key={i}
@@ -269,12 +270,16 @@ export const Timeline: React.FC = () => {
               ))}
             </div>
 
-            {/* Red Playhead Line */}
+            {/* Red Playhead Line & Draggable Handle */}
             <div
-              className="absolute top-0 bottom-0 w-0.5 bg-rose-500 z-30 pointer-events-none"
+              onMouseDown={(e) => {
+                e.stopPropagation();
+                handleScrubStart(e);
+              }}
+              className="absolute top-0 bottom-0 w-0.5 bg-rose-500 z-30 cursor-ew-resize group"
               style={{ left: `${currentTime * zoomLevel}px` }}
             >
-              <div className="w-3 h-3 bg-rose-500 -translate-x-[5px] rotate-45 rounded-sm shadow-md" />
+              <div className="w-4 h-4 bg-rose-500 -translate-x-[7px] rotate-45 rounded-sm shadow-lg border border-white flex items-center justify-center cursor-grab active:cursor-grabbing group-hover:scale-125 transition-transform" />
             </div>
 
             {/* Tracks Stack */}
@@ -297,7 +302,7 @@ export const Timeline: React.FC = () => {
                           left: `${leftPx}px`,
                           width: `${widthPx}px`,
                         }}
-                        className={`absolute top-1 bottom-1 rounded-md px-2 flex items-center justify-between text-xs font-medium cursor-pointer border shadow-sm transition-all overflow-hidden ${
+                        className={`absolute top-1 bottom-1 rounded-md px-1 flex items-center justify-between text-xs font-medium cursor-pointer border shadow-sm transition-all overflow-hidden ${
                           isSelected
                             ? 'bg-neutral-800 border-white text-white ring-2 ring-white/50'
                             : 'bg-neutral-800/80 border-neutral-700 text-neutral-200 hover:border-neutral-500'
@@ -315,10 +320,13 @@ export const Timeline: React.FC = () => {
                               initialDuration: clip.duration,
                             });
                           }}
-                          className="absolute left-0 top-0 bottom-0 w-1.5 bg-white/60 hover:bg-white cursor-ew-resize rounded-l-md"
-                        />
+                          className="absolute left-0 top-0 bottom-0 w-2.5 bg-white/70 hover:bg-white cursor-ew-resize rounded-l-md flex items-center justify-center shadow z-10"
+                          title="Drag to shorten/trim start of clip"
+                        >
+                          <div className="w-0.5 h-3 bg-neutral-950/70 rounded" />
+                        </div>
 
-                        <span className="truncate text-[10px] pl-1">{clip.name}</span>
+                        <span className="truncate text-[10px] px-3 font-semibold select-none">{clip.name}</span>
 
                         {/* Right Trim Handle */}
                         <div
@@ -332,8 +340,11 @@ export const Timeline: React.FC = () => {
                               initialDuration: clip.duration,
                             });
                           }}
-                          className="absolute right-0 top-0 bottom-0 w-1.5 bg-white/60 hover:bg-white cursor-ew-resize rounded-r-md"
-                        />
+                          className="absolute right-0 top-0 bottom-0 w-2.5 bg-white/70 hover:bg-white cursor-ew-resize rounded-r-md flex items-center justify-center shadow z-10"
+                          title="Drag to shorten/trim end of clip"
+                        >
+                          <div className="w-0.5 h-3 bg-neutral-950/70 rounded" />
+                        </div>
                       </div>
                     );
                   })}
