@@ -23,7 +23,6 @@ export const EditoraLogo: React.FC<EditoraLogoProps> = ({
 
   const isLight = variant === 'light';
   const primaryColor = isLight ? '#FFFFFF' : '#09090B';
-  const accentSparkle = '#38BDF8'; // Vibrant cyan/sky accent for sparkles or sleek dark
 
   return (
     <div className={`inline-flex items-center gap-3 select-none ${className}`}>
@@ -54,12 +53,12 @@ export const EditoraLogo: React.FC<EditoraLogoProps> = ({
           {/* Top Right Sparkle Star 1 */}
           <path
             d="M 170 15 Q 170 30 185 30 Q 170 30 170 45 Q 170 30 155 30 Q 170 30 170 15 Z"
-            fill={isLight ? '#38BDF8' : primaryColor}
+            fill={primaryColor}
           />
           {/* Top Right Sparkle Star 2 (Smaller) */}
           <path
             d="M 188 42 Q 188 50 196 50 Q 188 50 188 58 Q 188 50 180 50 Q 188 50 188 42 Z"
-            fill={isLight ? '#38BDF8' : primaryColor}
+            fill={primaryColor}
           />
         </svg>
       </div>

@@ -88,7 +88,7 @@ export const ClipInspectorPanel: React.FC = () => {
     <div className="p-4 flex flex-col h-full overflow-y-auto select-none space-y-5">
       <div className="flex items-center justify-between border-b border-neutral-800 pb-2">
         <h2 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-          <Sliders className="w-4 h-4 text-sky-400" />
+          <Sliders className="w-4 h-4 text-white" />
           Clip Inspector: {selectedClip.name}
         </h2>
       </div>
@@ -97,10 +97,10 @@ export const ClipInspectorPanel: React.FC = () => {
       <div>
         <label className="text-xs font-semibold text-neutral-300 flex items-center justify-between mb-2">
           <span className="flex items-center gap-1.5">
-            <Zap className="w-3.5 h-3.5 text-amber-400" />
+            <Zap className="w-3.5 h-3.5 text-white" />
             Playback Speed
           </span>
-          <span className="text-sky-400 font-mono font-bold">{speed}x</span>
+          <span className="text-white font-mono font-bold">{speed}x</span>
         </label>
         <div className="flex items-center gap-2">
           {[0.5, 1, 1.5, 2, 4].map((sVal) => (
@@ -109,7 +109,7 @@ export const ClipInspectorPanel: React.FC = () => {
               onClick={() => updateClipSpeed(selectedClipId, sVal)}
               className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition border ${
                 speed === sVal
-                  ? 'bg-sky-500 text-neutral-950 border-sky-400'
+                  ? 'bg-white text-neutral-950 border-white'
                   : 'bg-neutral-900 text-neutral-300 border-neutral-800 hover:border-neutral-700'
               }`}
             >
@@ -122,7 +122,7 @@ export const ClipInspectorPanel: React.FC = () => {
       {/* Preset Filters */}
       <div>
         <label className="text-xs font-semibold text-neutral-300 flex items-center gap-1.5 mb-2">
-          <Palette className="w-3.5 h-3.5 text-purple-400" />
+          <Palette className="w-3.5 h-3.5 text-white" />
           Color Filter Presets
         </label>
         <div className="grid grid-cols-4 gap-1.5">
@@ -132,7 +132,7 @@ export const ClipInspectorPanel: React.FC = () => {
               onClick={() => updateClipFilter(selectedClipId, f.id)}
               className={`p-2 rounded-lg text-[10px] font-bold truncate transition border ${
                 filter === f.id
-                  ? 'bg-purple-500/30 text-purple-200 border-purple-400 ring-1 ring-purple-400'
+                  ? 'bg-neutral-800 text-white border-white ring-1 ring-white'
                   : 'bg-neutral-900 text-neutral-400 border-neutral-800 hover:border-neutral-700'
               }`}
             >
@@ -146,14 +146,14 @@ export const ClipInspectorPanel: React.FC = () => {
       <div className="bg-neutral-900/60 p-3 rounded-xl border border-neutral-800">
         <div className="flex items-center justify-between mb-2">
           <label className="text-xs font-semibold text-neutral-200 flex items-center gap-1.5">
-            <Eye className="w-3.5 h-3.5 text-emerald-400" />
+            <Eye className="w-3.5 h-3.5 text-white" />
             Chroma Key (Green Screen)
           </label>
           <input
             type="checkbox"
             checked={chromaKey?.enabled || false}
             onChange={toggleChromaKey}
-            className="w-4 h-4 accent-emerald-500 cursor-pointer"
+            className="w-4 h-4 accent-white cursor-pointer"
           />
         </div>
 
@@ -181,7 +181,7 @@ export const ClipInspectorPanel: React.FC = () => {
                 step="0.05"
                 value={chromaKey.similarity || 0.4}
                 onChange={(e) => updateChromaKeySettings({ similarity: parseFloat(e.target.value) })}
-                className="w-full accent-emerald-500"
+                className="w-full accent-white"
               />
             </div>
           </div>
@@ -203,7 +203,7 @@ export const ClipInspectorPanel: React.FC = () => {
             max="100"
             value={colorAdjustments.brightness}
             onChange={(e) => updateClipColor(selectedClipId, { brightness: Number(e.target.value) })}
-            className="w-full accent-sky-500"
+            className="w-full accent-white"
           />
         </div>
 
@@ -218,7 +218,7 @@ export const ClipInspectorPanel: React.FC = () => {
             max="100"
             value={colorAdjustments.contrast}
             onChange={(e) => updateClipColor(selectedClipId, { contrast: Number(e.target.value) })}
-            className="w-full accent-sky-500"
+            className="w-full accent-white"
           />
         </div>
 
@@ -233,7 +233,7 @@ export const ClipInspectorPanel: React.FC = () => {
             max="100"
             value={colorAdjustments.saturation}
             onChange={(e) => updateClipColor(selectedClipId, { saturation: Number(e.target.value) })}
-            className="w-full accent-sky-500"
+            className="w-full accent-white"
           />
         </div>
 
@@ -248,7 +248,7 @@ export const ClipInspectorPanel: React.FC = () => {
             max="30"
             value={colorAdjustments.blur}
             onChange={(e) => updateClipColor(selectedClipId, { blur: Number(e.target.value) })}
-            className="w-full accent-sky-500"
+            className="w-full accent-white"
           />
         </div>
       </div>
@@ -256,7 +256,7 @@ export const ClipInspectorPanel: React.FC = () => {
       {/* Audio Controls */}
       <div className="space-y-3 bg-neutral-900/60 p-3 rounded-xl border border-neutral-800">
         <label className="text-xs font-semibold text-neutral-200 flex items-center gap-1.5">
-          <Volume2 className="w-3.5 h-3.5 text-amber-400" />
+          <Volume2 className="w-3.5 h-3.5 text-white" />
           Audio Controls
         </label>
 
@@ -272,7 +272,7 @@ export const ClipInspectorPanel: React.FC = () => {
             step="0.05"
             value={audioSettings.volume}
             onChange={(e) => updateClipAudio(selectedClipId, { volume: parseFloat(e.target.value) })}
-            className="w-full accent-amber-500"
+            className="w-full accent-white"
           />
         </div>
 
@@ -311,7 +311,7 @@ export const ClipInspectorPanel: React.FC = () => {
             onClick={() => updateClipTransform(selectedClipId, { rotation: (transform.rotation + 90) % 360 })}
             className="flex-1 py-2 bg-neutral-900 hover:bg-neutral-800 text-neutral-300 rounded-lg text-xs font-semibold border border-neutral-800 flex items-center justify-center gap-1.5 transition"
           >
-            <RotateCw className="w-3.5 h-3.5 text-sky-400" />
+            <RotateCw className="w-3.5 h-3.5 text-white" />
             <span>Rotate 90°</span>
           </button>
 
@@ -320,7 +320,7 @@ export const ClipInspectorPanel: React.FC = () => {
             className="p-2 bg-neutral-900 hover:bg-neutral-800 text-neutral-300 rounded-lg border border-neutral-800 transition"
             title="Flip Horizontal"
           >
-            <FlipHorizontal className="w-4 h-4 text-sky-400" />
+            <FlipHorizontal className="w-4 h-4 text-white" />
           </button>
 
           <button
@@ -328,7 +328,7 @@ export const ClipInspectorPanel: React.FC = () => {
             className="p-2 bg-neutral-900 hover:bg-neutral-800 text-neutral-300 rounded-lg border border-neutral-800 transition"
             title="Flip Vertical"
           >
-            <FlipVertical className="w-4 h-4 text-sky-400" />
+            <FlipVertical className="w-4 h-4 text-white" />
           </button>
         </div>
 
@@ -344,7 +344,7 @@ export const ClipInspectorPanel: React.FC = () => {
             step="0.05"
             value={transform.scale}
             onChange={(e) => updateClipTransform(selectedClipId, { scale: parseFloat(e.target.value) })}
-            className="w-full accent-sky-500"
+            className="w-full accent-white"
           />
         </div>
       </div>

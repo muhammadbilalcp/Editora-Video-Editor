@@ -98,7 +98,7 @@ export const ProjectsModal: React.FC<ProjectsModalProps> = ({ isOpen, onClose })
 
           <button
             type="submit"
-            className="w-full md:w-auto flex items-center justify-center gap-1.5 bg-amber-500 hover:bg-amber-400 text-neutral-950 font-bold text-xs px-4 py-2 rounded-lg transition shrink-0"
+            className="w-full md:w-auto flex items-center justify-center gap-1.5 bg-white hover:bg-neutral-200 text-neutral-950 font-bold text-xs px-4 py-2 rounded-lg transition shrink-0"
           >
             <Plus className="w-4 h-4" />
             <span>New Project</span>
@@ -108,7 +108,7 @@ export const ProjectsModal: React.FC<ProjectsModalProps> = ({ isOpen, onClose })
         {/* Cloud Saved Projects List */}
         <div className="flex-1 overflow-y-auto pr-1">
           <h3 className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-            <Cloud className="w-4 h-4 text-sky-400" />
+            <Cloud className="w-4 h-4 text-white" />
             Saved Cloud Projects ({projects.length})
           </h3>
 
@@ -128,15 +128,15 @@ export const ProjectsModal: React.FC<ProjectsModalProps> = ({ isOpen, onClose })
                 <div
                   key={proj.id}
                   onClick={() => handleSelectProject(proj)}
-                  className="group bg-neutral-800/80 hover:bg-neutral-800 border border-neutral-700/80 hover:border-amber-400 p-3.5 rounded-xl cursor-pointer transition shadow flex items-center justify-between"
+                  className="group bg-neutral-800/80 hover:bg-neutral-800 border border-neutral-700/80 hover:border-white p-3.5 rounded-xl cursor-pointer transition shadow flex items-center justify-between"
                 >
                   <div className="truncate flex-1 pr-2">
-                    <div className="text-sm font-bold text-white truncate group-hover:text-amber-400 transition">
+                    <div className="text-sm font-bold text-white truncate group-hover:text-neutral-200 transition">
                       {proj.name}
                     </div>
                     <div className="flex items-center gap-3 text-[11px] text-neutral-400 mt-1">
                       <span className="flex items-center gap-1">
-                        <Smartphone className="w-3 h-3 text-sky-400" />
+                        <Smartphone className="w-3 h-3 text-white" />
                         {proj.aspectRatio}
                       </span>
                       <span className="flex items-center gap-1">

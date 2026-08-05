@@ -146,19 +146,19 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenAuth }) => {
             onClick={toggleTheme}
             className={`p-2 rounded-xl border flex items-center gap-1.5 text-xs font-bold transition ${
               theme === 'light'
-                ? 'bg-amber-100 text-amber-900 border-amber-300 hover:bg-amber-200'
-                : 'bg-neutral-800 text-sky-300 border-neutral-700 hover:bg-neutral-700'
+                ? 'bg-neutral-200 text-neutral-900 border-neutral-300 hover:bg-neutral-300'
+                : 'bg-neutral-800 text-neutral-200 border-neutral-700 hover:bg-neutral-700'
             }`}
             title="Toggle Eye Comfort Theme (Sunlight / Night)"
           >
             {theme === 'light' ? (
               <>
-                <Sun className="w-4 h-4 text-amber-600 fill-current" />
+                <Sun className="w-4 h-4 text-neutral-800 fill-current" />
                 <span className="hidden sm:inline">Sunlight</span>
               </>
             ) : (
               <>
-                <Moon className="w-4 h-4 text-sky-400 fill-current" />
+                <Moon className="w-4 h-4 text-white fill-current" />
                 <span className="hidden sm:inline">Night Dark</span>
               </>
             )}
@@ -180,7 +180,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenAuth }) => {
           {/* Auth Profile Button */}
           <button
             onClick={onOpenAuth}
-            className="flex items-center gap-2 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-bold text-xs px-3.5 py-2 rounded-xl shadow-lg shadow-sky-500/20 transition"
+            className="flex items-center gap-2 bg-white hover:bg-neutral-200 text-neutral-950 font-bold text-xs px-3.5 py-2 rounded-xl shadow-md transition"
           >
             {user?.photoURL ? (
               <img src={user.photoURL} alt="User" className="w-5 h-5 rounded-full object-cover" />
@@ -197,19 +197,19 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenAuth }) => {
         {/* Welcome Banner */}
         <div className={`p-6 md:p-8 rounded-3xl border relative overflow-hidden shadow-2xl ${
           theme === 'light'
-            ? 'bg-gradient-to-br from-sky-50 via-white to-blue-50 border-sky-200'
-            : 'bg-gradient-to-br from-neutral-900 via-neutral-900 to-sky-950/40 border-neutral-800'
+            ? 'bg-white border-slate-200'
+            : 'bg-neutral-900 border-neutral-800'
         }`}>
           <div className="relative z-10 max-w-2xl">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sky-500/10 border border-sky-500/30 text-sky-400 text-xs font-bold mb-3">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-neutral-800 border border-neutral-700 text-white text-xs font-bold mb-3">
               <Zap className="w-3.5 h-3.5" />
-              <span>CapCut-Grade AI Video Studio</span>
+              <span>Editora Pro AI Video Studio</span>
             </div>
             <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight mb-2">
               Create Viral Videos in Seconds
             </h1>
             <p className={`text-xs md:text-sm ${theme === 'light' ? 'text-slate-600' : 'text-neutral-400'}`}>
-              Multi-track timeline, Pexels media, GIPHY stickers, AI Text-to-Speech voices, Chroma Key green screen, and CapCut editing precision.
+              Multi-track timeline, Stock HD media, GIF stickers, AI Text-to-Speech voices, Chroma Key green screen, and pro-grade editing precision.
             </p>
 
             {project && (
@@ -223,7 +223,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenAuth }) => {
                     }
                     setViewMode('editor');
                   }}
-                  className="flex items-center gap-2 bg-sky-500 hover:bg-sky-400 text-neutral-950 font-extrabold text-xs px-5 py-2.5 rounded-xl shadow-lg shadow-sky-500/20 transition transform active:scale-95"
+                  className="flex items-center gap-2 bg-white hover:bg-neutral-200 text-neutral-950 font-extrabold text-xs px-5 py-2.5 rounded-xl shadow-md transition transform active:scale-95"
                 >
                   <Play className="w-4 h-4 fill-current" />
                   <span>Continue Editing: "{project.name}"</span>
@@ -235,7 +235,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenAuth }) => {
 
         {/* Start New Project Section */}
         <div className="space-y-4">
-          <h2 className="text-sm font-bold uppercase tracking-wider text-sky-400 flex items-center gap-2">
+          <h2 className="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2">
             <Plus className="w-4 h-4" />
             <span>Start New Video Project</span>
           </h2>
@@ -251,14 +251,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenAuth }) => {
                 placeholder="Enter Project Title (e.g. Summer Travel Vlog)..."
                 className={`flex-1 border rounded-xl px-4 py-3 text-xs outline-none transition ${
                   theme === 'light'
-                    ? 'bg-slate-100 border-slate-300 text-slate-900 focus:border-sky-500'
-                    : 'bg-neutral-950 border-neutral-800 text-white focus:border-sky-500'
+                    ? 'bg-slate-100 border-slate-300 text-slate-900 focus:border-black'
+                    : 'bg-neutral-950 border-neutral-800 text-white focus:border-white'
                 }`}
               />
 
               <button
                 type="submit"
-                className="flex items-center justify-center gap-2 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-extrabold text-xs px-6 py-3 rounded-xl shadow-lg shadow-sky-500/20 transition shrink-0"
+                className="flex items-center justify-center gap-2 bg-white hover:bg-neutral-200 text-neutral-950 font-extrabold text-xs px-6 py-3 rounded-xl shadow-md transition shrink-0"
               >
                 <Plus className="w-4 h-4" />
                 <span>Create & Open Editor</span>
@@ -277,7 +277,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenAuth }) => {
                     onClick={() => setSelectedAspect(opt.id)}
                     className={`p-4 rounded-xl border cursor-pointer transition flex flex-col items-center text-center space-y-2 ${
                       selectedAspect === opt.id
-                        ? 'bg-sky-500/20 border-sky-400 text-sky-400 ring-1 ring-sky-400'
+                        ? 'bg-neutral-800 border-white text-white ring-1 ring-white'
                         : theme === 'light'
                         ? 'bg-slate-100 border-slate-200 hover:border-slate-300 text-slate-700'
                         : 'bg-neutral-950 border-neutral-800 hover:border-neutral-700 text-neutral-300'
@@ -297,7 +297,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenAuth }) => {
 
         {/* Quick Creative Tool Shortcuts */}
         <div className="space-y-4">
-          <h2 className="text-sm font-bold uppercase tracking-wider text-amber-400 flex items-center gap-2">
+          <h2 className="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2">
             <Sparkles className="w-4 h-4" />
             <span>Creative AI Studio Tools</span>
           </h2>
@@ -306,38 +306,38 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenAuth }) => {
             {[
               {
                 id: 'media',
-                title: 'Pexels Media',
+                title: 'Stock Media',
                 desc: 'Stock Video & HD Photos',
                 icon: Film,
-                color: 'text-sky-400 bg-sky-500/10 border-sky-500/30',
+                color: 'text-white bg-neutral-800 border-neutral-700',
               },
               {
                 id: 'voice',
                 title: 'AI Voiceovers',
                 desc: 'Natural Speech Engine',
                 icon: Sparkles,
-                color: 'text-amber-400 bg-amber-500/10 border-amber-500/30',
+                color: 'text-white bg-neutral-800 border-neutral-700',
               },
               {
                 id: 'text',
                 title: 'Text & Titles',
                 desc: 'Animated Typography',
                 icon: Type,
-                color: 'text-purple-400 bg-purple-500/10 border-purple-500/30',
+                color: 'text-white bg-neutral-800 border-neutral-700',
               },
               {
                 id: 'giphy',
-                title: 'GIPHY GIFs',
+                title: 'Editora GIFs',
                 desc: 'Stickers & Meme Overlay',
                 icon: ImageIcon,
-                color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30',
+                color: 'text-white bg-neutral-800 border-neutral-700',
               },
               {
                 id: 'recorder',
                 title: 'Voice Record',
                 desc: 'Direct Mic Audio',
                 icon: Mic,
-                color: 'text-rose-400 bg-rose-500/10 border-rose-500/30',
+                color: 'text-white bg-neutral-800 border-neutral-700',
               },
             ].map((tool) => (
               <div
@@ -369,7 +369,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenAuth }) => {
         {/* Cloud Projects & History */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-purple-400 flex items-center gap-2">
+            <h2 className="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2">
               <FolderOpen className="w-4 h-4" />
               <span>Saved Cloud Projects ({savedProjects.length})</span>
             </h2>
@@ -377,7 +377,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenAuth }) => {
             {!user && (
               <button
                 onClick={onOpenAuth}
-                className="text-xs font-bold text-sky-400 hover:underline flex items-center gap-1"
+                className="text-xs font-bold text-white hover:underline flex items-center gap-1"
               >
                 <span>Sign in to sync cloud projects</span>
                 <ChevronRight className="w-3.5 h-3.5" />
@@ -389,7 +389,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenAuth }) => {
             <div className={`p-8 rounded-2xl border text-center space-y-2 ${
               theme === 'light' ? 'bg-white border-slate-200' : 'bg-neutral-900/60 border-neutral-800'
             }`}>
-              <ShieldCheck className="w-8 h-8 text-sky-400 mx-auto" />
+              <ShieldCheck className="w-8 h-8 text-white mx-auto" />
               <div className="text-xs font-bold text-neutral-300">Firebase Cloud Synchronization Active</div>
               <p className="text-[11px] text-neutral-500 max-w-sm mx-auto">
                 Sign in with Google or Email to store and load your video timeline across mobile and desktop devices.
@@ -409,18 +409,18 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenAuth }) => {
                 <div
                   key={proj.id}
                   onClick={() => handleOpenExistingProject(proj)}
-                  className={`group p-4 rounded-2xl border cursor-pointer transition flex flex-col justify-between hover:border-sky-400 space-y-3 ${
+                  className={`group p-4 rounded-2xl border cursor-pointer transition flex flex-col justify-between hover:border-white space-y-3 ${
                     theme === 'light' ? 'bg-white border-slate-200 shadow-sm' : 'bg-neutral-900 border-neutral-800'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="truncate">
-                      <div className="text-sm font-bold truncate group-hover:text-sky-400 transition">
+                      <div className="text-sm font-bold truncate group-hover:text-white transition">
                         {proj.name}
                       </div>
                       <div className="flex items-center gap-2 text-[10px] text-neutral-500 mt-1">
                         <span className="flex items-center gap-1">
-                          <Smartphone className="w-3 h-3 text-sky-400" />
+                          <Smartphone className="w-3 h-3 text-white" />
                           {proj.aspectRatio}
                         </span>
                         <span className="flex items-center gap-1">
@@ -439,7 +439,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenAuth }) => {
                     </button>
                   </div>
 
-                  <button className="w-full flex items-center justify-center gap-1.5 bg-neutral-800 group-hover:bg-sky-500 text-neutral-200 group-hover:text-neutral-950 font-bold text-xs py-2 rounded-xl transition">
+                  <button className="w-full flex items-center justify-center gap-1.5 bg-neutral-800 group-hover:bg-white text-neutral-200 group-hover:text-neutral-950 font-bold text-xs py-2 rounded-xl transition">
                     <Play className="w-3.5 h-3.5 fill-current" />
                     <span>Open in Studio</span>
                   </button>

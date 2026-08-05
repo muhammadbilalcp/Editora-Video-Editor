@@ -76,12 +76,12 @@ export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose }) => 
                     onClick={() => setResolution(res.id as any)}
                     className={`p-3 rounded-xl border text-center transition ${
                       resolution === res.id
-                        ? 'bg-sky-500/20 border-sky-400 text-white ring-1 ring-sky-400'
+                        ? 'bg-neutral-800 border-white text-white ring-1 ring-white'
                         : 'bg-neutral-800/60 border-neutral-700 text-neutral-400 hover:border-neutral-600'
                     }`}
                   >
                     <div className="text-xs font-bold text-white">{res.label}</div>
-                    <div className="text-[10px] text-sky-400 mt-0.5">{res.desc}</div>
+                    <div className="text-[10px] text-neutral-400 mt-0.5">{res.desc}</div>
                   </button>
                 ))}
               </div>
@@ -89,7 +89,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose }) => 
 
             <button
               onClick={handleStartExport}
-              className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-neutral-950 font-bold text-sm py-3 rounded-xl shadow-lg shadow-sky-500/20 transition transform active:scale-95"
+              className="w-full flex items-center justify-center gap-2 bg-white hover:bg-neutral-200 text-neutral-950 font-bold text-sm py-3 rounded-xl shadow-md transition transform active:scale-95"
             >
               <Film className="w-4 h-4" />
               <span>Start Rendering MP4</span>
@@ -101,7 +101,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose }) => 
           exportState.status === 'rendering' ||
           exportState.status === 'encoding') && (
           <div className="py-6 flex flex-col items-center justify-center text-center space-y-4">
-            <Loader2 className="w-10 h-10 text-sky-400 animate-spin" />
+            <Loader2 className="w-10 h-10 text-white animate-spin" />
 
             <div>
               <div className="text-sm font-bold text-white capitalize">
@@ -115,7 +115,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose }) => 
             {/* Progress Bar */}
             <div className="w-full bg-neutral-800 h-2.5 rounded-full overflow-hidden border border-neutral-700">
               <div
-                className="bg-gradient-to-r from-sky-500 to-blue-500 h-full transition-all duration-300"
+                className="bg-white h-full transition-all duration-300"
                 style={{ width: `${exportState.progress}%` }}
               />
             </div>

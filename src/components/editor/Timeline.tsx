@@ -21,6 +21,9 @@ import {
   Sparkles,
   Type,
   Mic,
+  Edit3,
+  Film,
+  Music,
 } from 'lucide-react';
 import { Track, Clip } from '../../types/editor';
 
@@ -116,7 +119,7 @@ export const Timeline: React.FC = () => {
         theme === 'light' ? 'bg-slate-100 border-slate-300 text-slate-900' : 'bg-neutral-900 border-neutral-800 text-white'
       }`}
     >
-      {/* CapCut Horizontal Action Toolbar */}
+      {/* Horizontal Action Toolbar */}
       <CapCutToolbar />
 
       {/* Timeline Controls & Zoom Bar */}
@@ -124,7 +127,7 @@ export const Timeline: React.FC = () => {
         theme === 'light' ? 'bg-slate-200 border-slate-300 text-slate-700' : 'bg-neutral-900/90 border-neutral-800/80 text-neutral-400'
       }`}>
         <div className="flex items-center gap-2">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-sky-400">Timeline Tracks</span>
+          <span className="text-[10px] font-bold uppercase tracking-wider text-white">Timeline Tracks</span>
         </div>
 
         {/* Zoom Scale Controls */}
@@ -136,7 +139,7 @@ export const Timeline: React.FC = () => {
             max="100"
             value={zoomLevel}
             onChange={(e) => setZoomLevel(Number(e.target.value))}
-            className="w-20 md:w-28 accent-sky-500 cursor-pointer"
+            className="w-20 md:w-28 accent-white cursor-pointer"
           />
           <ZoomIn className="w-3.5 h-3.5 text-neutral-400" />
         </div>
@@ -145,24 +148,56 @@ export const Timeline: React.FC = () => {
       {/* Main Multi-Track Scroll Canvas */}
       <div className="flex-1 flex overflow-hidden relative">
         {/* Track Control Headers (Left Column) */}
-        <div className="w-36 md:w-44 bg-neutral-900 border-r border-neutral-800 flex flex-col shrink-0 z-10">
-          <div className="h-7 border-b border-neutral-800 px-3 flex items-center text-[10px] font-bold text-neutral-400 tracking-wider uppercase">
-            Tracks
+        <div className="w-36 md:w-44 bg-neutral-950 border-r border-neutral-900 flex flex-col shrink-0 z-10">
+          {/* Header Controls: Mute clip audio & Cover */}
+          <div className="h-8 border-b border-neutral-900 px-2 flex items-center justify-between gap-1 text-[10px] font-bold text-neutral-300">
+            <button
+              onClick={() => {
+                setProject((prev) => ({
+                  ...prev,
+                  tracks: prev.tracks.map((t) => ({ ...t, muted: !t.muted })),
+                }));
+              }}
+              className="flex items-center gap-1 hover:text-white transition px-1 py-0.5 rounded bg-neutral-900/80 border border-neutral-800"
+              title="Mute/Unmute all audio"
+            >
+              <Volume2 className="w-3 h-3 text-white" />
+              <span className="truncate max-w-[55px]">Mute audio</span>
+            </button>
+
+            <button
+              onClick={() => setActivePanel('inspector')}
+              className="flex items-center gap-1 hover:text-white transition px-1 py-0.5 rounded bg-neutral-900/80 border border-neutral-800"
+              title="Edit Video Cover Frame"
+            >
+              <Edit3 className="w-3 h-3 text-white" />
+              <span>Cover</span>
+            </button>
           </div>
-          <div className="flex-1 overflow-y-auto divide-y divide-neutral-800/60">
+
+          <div className="flex-1 overflow-y-auto divide-y divide-neutral-900">
             {project.tracks.map((track) => (
               <div
                 key={track.id}
-                className="h-10 px-2 flex items-center justify-between text-xs text-neutral-300 bg-neutral-900/60 hover:bg-neutral-800/40"
+                className="h-10 px-2 flex items-center justify-between text-xs text-neutral-300 bg-neutral-950/80 hover:bg-neutral-900"
               >
-                <span className="truncate font-medium text-[11px] max-w-[80px] md:max-w-[100px]">
-                  {track.name}
-                </span>
+                <div className="flex items-center gap-1.5 truncate">
+                  {track.type === 'audio' ? (
+                    <Music className="w-3.5 h-3.5 text-white shrink-0" />
+                  ) : track.type === 'text' ? (
+                    <Type className="w-3.5 h-3.5 text-white shrink-0" />
+                  ) : (
+                    <Film className="w-3.5 h-3.5 text-white shrink-0" />
+                  )}
+                  <span className="truncate font-semibold text-[11px] max-w-[70px] md:max-w-[90px]">
+                    {track.name}
+                  </span>
+                </div>
 
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => toggleTrackMute(track.id)}
-                    className={`p-1 rounded hover:bg-neutral-700 transition ${
+                    className={`p-1 rounded hover:bg-neutral-800 transition ${
                       track.muted ? 'text-rose-400' : 'text-neutral-400 hover:text-white'
                     }`}
                     title={track.muted ? 'Unmute Track' : 'Mute Track'}
@@ -172,7 +207,7 @@ export const Timeline: React.FC = () => {
 
                   <button
                     onClick={() => toggleTrackHide(track.id)}
-                    className={`p-1 rounded hover:bg-neutral-700 transition ${
+                    className={`p-1 rounded hover:bg-neutral-800 transition ${
                       track.hidden ? 'text-amber-400' : 'text-neutral-400 hover:text-white'
                     }`}
                     title={track.hidden ? 'Show Track' : 'Hide Track'}
@@ -182,6 +217,23 @@ export const Timeline: React.FC = () => {
                 </div>
               </div>
             ))}
+
+            {/* Quick Add Track Rows */}
+            <div
+              onClick={() => setActivePanel('voice')}
+              className="h-9 px-2 flex items-center gap-2 text-[11px] font-semibold text-neutral-400 hover:text-white cursor-pointer hover:bg-neutral-900 transition"
+            >
+              <Music className="w-3.5 h-3.5 text-neutral-400" />
+              <span>+ Add audio</span>
+            </div>
+
+            <div
+              onClick={() => setActivePanel('text')}
+              className="h-9 px-2 flex items-center gap-2 text-[11px] font-semibold text-neutral-400 hover:text-white cursor-pointer hover:bg-neutral-900 transition"
+            >
+              <Type className="w-3.5 h-3.5 text-neutral-400" />
+              <span>+ Add text</span>
+            </div>
           </div>
         </div>
 
@@ -234,14 +286,8 @@ export const Timeline: React.FC = () => {
                         }}
                         className={`absolute top-1 bottom-1 rounded-md px-2 flex items-center justify-between text-xs font-medium cursor-pointer border shadow-sm transition-all overflow-hidden ${
                           isSelected
-                            ? 'bg-sky-500/30 border-sky-400 text-white ring-2 ring-sky-400/50'
-                            : clip.type === 'text'
-                            ? 'bg-purple-900/40 border-purple-600/60 text-purple-200'
-                            : clip.type === 'voiceover'
-                            ? 'bg-emerald-900/40 border-emerald-600/60 text-emerald-200'
-                            : clip.type === 'giphy'
-                            ? 'bg-amber-900/40 border-amber-600/60 text-amber-200'
-                            : 'bg-neutral-800 border-neutral-700 text-neutral-200 hover:border-neutral-500'
+                            ? 'bg-neutral-800 border-white text-white ring-2 ring-white/50'
+                            : 'bg-neutral-800/80 border-neutral-700 text-neutral-200 hover:border-neutral-500'
                         }`}
                       >
                         {/* Left Trim Handle */}
@@ -256,7 +302,7 @@ export const Timeline: React.FC = () => {
                               initialDuration: clip.duration,
                             });
                           }}
-                          className="absolute left-0 top-0 bottom-0 w-1.5 bg-sky-400/60 hover:bg-sky-400 cursor-ew-resize rounded-l-md"
+                          className="absolute left-0 top-0 bottom-0 w-1.5 bg-white/60 hover:bg-white cursor-ew-resize rounded-l-md"
                         />
 
                         <span className="truncate text-[10px] pl-1">{clip.name}</span>
@@ -273,7 +319,7 @@ export const Timeline: React.FC = () => {
                               initialDuration: clip.duration,
                             });
                           }}
-                          className="absolute right-0 top-0 bottom-0 w-1.5 bg-sky-400/60 hover:bg-sky-400 cursor-ew-resize rounded-r-md"
+                          className="absolute right-0 top-0 bottom-0 w-1.5 bg-white/60 hover:bg-white cursor-ew-resize rounded-r-md"
                         />
                       </div>
                     );

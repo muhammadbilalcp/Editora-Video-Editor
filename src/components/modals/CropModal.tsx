@@ -189,7 +189,7 @@ export const CropModal: React.FC = () => {
               max={100 - cropWidth}
               value={cropX}
               onChange={(e) => setCropX(Number(e.target.value))}
-              className="w-full accent-sky-500"
+              className="w-full accent-white"
             />
           </div>
 
@@ -204,7 +204,7 @@ export const CropModal: React.FC = () => {
               max={100 - cropHeight}
               value={cropY}
               onChange={(e) => setCropY(Number(e.target.value))}
-              className="w-full accent-sky-500"
+              className="w-full accent-white"
             />
           </div>
         </div>

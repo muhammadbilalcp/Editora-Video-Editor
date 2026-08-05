@@ -42,7 +42,7 @@ export const GiphyPanel: React.FC = () => {
     addClipToTrack({
       type: 'giphy',
       src: item.url,
-      name: item.title || (isSticker ? 'GIPHY Sticker' : 'GIPHY GIF'),
+      name: item.title || (isSticker ? 'GIF Sticker' : 'Animated GIF'),
       thumbnail: item.previewUrl,
       duration: 4,
     });
@@ -53,7 +53,7 @@ export const GiphyPanel: React.FC = () => {
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-amber-400" />
-          GIPHY GIFs & Stickers
+          Editora GIFs & Stickers
         </h2>
 
         <div className="flex items-center bg-neutral-900 border border-neutral-800 rounded-lg p-0.5">
@@ -82,7 +82,7 @@ export const GiphyPanel: React.FC = () => {
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder={isSticker ? 'Search GIPHY stickers...' : 'Search trending GIFs...'}
+          placeholder={isSticker ? 'Search stickers...' : 'Search trending GIFs...'}
           className="w-full bg-neutral-900 border border-neutral-800 rounded-lg pl-9 pr-4 py-2 text-xs text-white placeholder-neutral-500 focus:border-amber-500 outline-none transition"
         />
         <Search className="w-4 h-4 text-neutral-500 absolute left-3 top-2.5" />

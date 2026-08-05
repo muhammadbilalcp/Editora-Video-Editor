@@ -18,6 +18,8 @@ import {
   VolumeX,
   RotateCcw,
   Sparkles,
+  Undo,
+  Redo,
 } from 'lucide-react';
 
 export const PreviewCanvas: React.FC = () => {
@@ -29,6 +31,11 @@ export const PreviewCanvas: React.FC = () => {
     setIsPlaying,
     selectedClipId,
     updateClipTransform,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+    showToast,
   } = useEditor();
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -241,8 +248,8 @@ export const PreviewCanvas: React.FC = () => {
 
         {/* Selected Clip Highlight Boundary */}
         {selectedClipId && (
-          <div className="absolute inset-2 border-2 border-sky-400 border-dashed rounded-lg pointer-events-none opacity-80 animate-pulse flex items-top justify-right p-2">
-            <span className="bg-sky-500 text-neutral-950 text-[10px] font-bold px-1.5 py-0.5 rounded shadow">
+          <div className="absolute inset-2 border-2 border-white border-dashed rounded-lg pointer-events-none opacity-80 animate-pulse flex items-top justify-right p-2">
+            <span className="bg-white text-neutral-950 text-[10px] font-bold px-1.5 py-0.5 rounded shadow">
               Selected Clip
             </span>
           </div>
@@ -250,53 +257,65 @@ export const PreviewCanvas: React.FC = () => {
 
         {/* Floating Timecode Counter */}
         <div className="absolute top-3 left-3 bg-neutral-900/80 backdrop-blur border border-neutral-800 text-white font-mono text-xs px-2.5 py-1 rounded-md shadow flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
           <span>{formatTimecode(currentTime, true)}</span>
           <span className="text-neutral-500">/</span>
           <span className="text-neutral-400">{formatTimecode(project.duration)}</span>
         </div>
 
-        {/* Overlay On-Screen Quick Playback Control Bar */}
-        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-neutral-900/85 backdrop-blur border border-neutral-800/80 rounded-full px-4 py-1.5 shadow-2xl flex items-center gap-3">
-          <button
-            onClick={() => setCurrentTime(0)}
-            className="text-neutral-300 hover:text-white transition"
-            title="Jump to Start"
-          >
-            <SkipBack className="w-4 h-4" />
-          </button>
-
-          <button
-            onClick={() => setIsPlaying((prev) => !prev)}
-            className="w-8 h-8 rounded-full bg-sky-500 hover:bg-sky-400 text-neutral-950 flex items-center justify-center font-bold transition shadow-lg shadow-sky-500/30"
-          >
-            {isPlaying ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current ml-0.5" />}
-          </button>
-
-          <button
-            onClick={() => setCurrentTime((prev) => Math.min(prev + 5, project.duration))}
-            className="text-neutral-300 hover:text-white transition"
-            title="Forward 5s"
-          >
-            <SkipForward className="w-4 h-4" />
-          </button>
-
-          <div className="w-px h-4 bg-neutral-800 mx-1" />
-
-          <button
-            onClick={() => setIsMuted(!isMuted)}
-            className="text-neutral-300 hover:text-white transition"
-          >
-            {isMuted ? <VolumeX className="w-4 h-4 text-rose-400" /> : <Volume2 className="w-4 h-4" />}
-          </button>
-
+        {/* On-Screen Control Bar Below Canvas */}
+        <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between pointer-events-auto">
+          {/* Left: Fullscreen Toggle */}
           <button
             onClick={toggleFullscreen}
-            className="text-neutral-300 hover:text-white transition"
+            className="p-2 rounded-lg bg-neutral-900/90 hover:bg-neutral-800 text-neutral-300 hover:text-white border border-neutral-800 transition backdrop-blur shadow-lg"
             title="Fullscreen Preview"
           >
             <Maximize2 className="w-4 h-4" />
           </button>
+
+          {/* Center: Big Play / Pause Button */}
+          <button
+            onClick={() => setIsPlaying((prev) => !prev)}
+            className="w-10 h-10 rounded-full bg-white hover:bg-neutral-200 text-neutral-950 flex items-center justify-center font-bold transition shadow-xl transform active:scale-95"
+            title={isPlaying ? 'Pause' : 'Play'}
+          >
+            {isPlaying ? (
+              <Pause className="w-5 h-5 fill-current" />
+            ) : (
+              <Play className="w-5 h-5 fill-current ml-0.5" />
+            )}
+          </button>
+
+          {/* Right: Snap/Cover, Undo, Redo */}
+          <div className="flex items-center gap-1.5 bg-neutral-900/90 border border-neutral-800 rounded-lg p-1 shadow-lg backdrop-blur">
+            <button
+              onClick={() => showToast('Snap to grid enabled')}
+              className="px-2 py-1 rounded text-[10px] font-bold bg-neutral-800 text-white flex items-center gap-1 border border-neutral-700"
+              title="Snap & Keyframes ON"
+            >
+              <Sparkles className="w-3 h-3 text-white" />
+              <span>ON</span>
+            </button>
+
+            <button
+              onClick={undo}
+              disabled={!canUndo}
+              className="p-1.5 text-neutral-300 hover:text-white disabled:opacity-30 transition rounded hover:bg-neutral-800"
+              title="Undo"
+            >
+              <Undo className="w-4 h-4" />
+            </button>
+
+            <button
+              onClick={redo}
+              disabled={!canRedo}
+              className="p-1.5 text-neutral-300 hover:text-white disabled:opacity-30 transition rounded hover:bg-neutral-800"
+              title="Redo"
+            >
+              <Redo className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </div>
     </div>

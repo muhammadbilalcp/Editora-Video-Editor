@@ -90,8 +90,8 @@ export const ElevenLabsVoicePanel: React.FC = () => {
     <div className="p-4 flex flex-col h-full overflow-y-auto select-none">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-sky-400" />
-          ElevenLabs AI Voice
+          <Sparkles className="w-4 h-4 text-white" />
+          Editora AI Voice
         </h2>
 
         {/* Mode Switcher */}
@@ -99,7 +99,7 @@ export const ElevenLabsVoicePanel: React.FC = () => {
           <button
             onClick={() => setMode('tts')}
             className={`px-3 py-1 rounded-md text-xs font-semibold transition ${
-              mode === 'tts' ? 'bg-sky-500 text-neutral-950 shadow' : 'text-neutral-400 hover:text-white'
+              mode === 'tts' ? 'bg-white text-neutral-950 shadow' : 'text-neutral-400 hover:text-white'
             }`}
           >
             Narration
@@ -107,7 +107,7 @@ export const ElevenLabsVoicePanel: React.FC = () => {
           <button
             onClick={() => setMode('clone')}
             className={`px-3 py-1 rounded-md text-xs font-semibold transition ${
-              mode === 'clone' ? 'bg-sky-500 text-neutral-950 shadow' : 'text-neutral-400 hover:text-white'
+              mode === 'clone' ? 'bg-white text-neutral-950 shadow' : 'text-neutral-400 hover:text-white'
             }`}
           >
             Voice Clone
@@ -116,20 +116,20 @@ export const ElevenLabsVoicePanel: React.FC = () => {
       </div>
 
       {/* PRO Upgrade Plan Banner */}
-      <div className="mb-4 p-3 rounded-xl bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-purple-500/10 border border-amber-500/30 flex items-center justify-between gap-3">
+      <div className="mb-4 p-3 rounded-xl bg-neutral-900 border border-neutral-800 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
-          <div className="p-1.5 bg-amber-500/20 text-amber-400 rounded-lg font-extrabold text-[10px] tracking-wider uppercase shrink-0">
+          <div className="p-1.5 bg-neutral-800 text-white rounded-lg font-extrabold text-[10px] tracking-wider uppercase shrink-0 border border-neutral-700">
             PRO
           </div>
           <div>
-            <div className="text-xs font-bold text-amber-300">Unlimited Studio Voice Generation</div>
+            <div className="text-xs font-bold text-white">Unlimited Studio Voice Generation</div>
             <div className="text-[10px] text-neutral-400">Razorpay Payment Integration Active Soon</div>
           </div>
         </div>
 
         <button
           onClick={() => alert('Razorpay upgrade plan gateway will be activated shortly!')}
-          className="bg-amber-500 hover:bg-amber-400 text-neutral-950 font-bold text-[11px] px-3 py-1.5 rounded-lg shadow-sm transition shrink-0"
+          className="bg-white hover:bg-neutral-200 text-neutral-950 font-bold text-[11px] px-3 py-1.5 rounded-lg shadow-sm transition shrink-0"
         >
           Upgrade Plan
         </button>
@@ -147,13 +147,13 @@ export const ElevenLabsVoicePanel: React.FC = () => {
                   onClick={() => setSelectedVoiceId(v.voice_id)}
                   className={`p-2.5 rounded-lg border text-left cursor-pointer transition ${
                     selectedVoiceId === v.voice_id
-                      ? 'bg-sky-500/20 border-sky-400 text-white ring-1 ring-sky-400'
+                      ? 'bg-neutral-800 border-white text-white ring-1 ring-white'
                       : 'bg-neutral-900 border-neutral-800 text-neutral-300 hover:border-neutral-700'
                   }`}
                 >
                   <div className="text-xs font-bold flex items-center justify-between">
                     <span>{v.name}</span>
-                    <span className="text-[10px] text-sky-400 bg-sky-950/60 px-1.5 py-0.5 rounded">
+                    <span className="text-[10px] text-neutral-300 bg-neutral-800 px-1.5 py-0.5 rounded border border-neutral-700">
                       {v.category}
                     </span>
                   </div>
@@ -173,7 +173,7 @@ export const ElevenLabsVoicePanel: React.FC = () => {
               onChange={(e) => setPromptText(e.target.value)}
               placeholder="Type your video script here... (e.g., 'Welcome to today's video! In this story we explore...')"
               rows={4}
-              className="w-full bg-neutral-900 border border-neutral-800 rounded-lg p-3 text-xs text-white placeholder-neutral-500 focus:border-sky-500 outline-none resize-none transition"
+              className="w-full bg-neutral-900 border border-neutral-800 rounded-lg p-3 text-xs text-white placeholder-neutral-500 focus:border-white outline-none resize-none transition"
             />
           </div>
 
@@ -182,7 +182,7 @@ export const ElevenLabsVoicePanel: React.FC = () => {
             <button
               onClick={handleGenerateTTS}
               disabled={isGenerating || !promptText.trim()}
-              className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-neutral-950 font-bold text-xs py-2.5 rounded-lg shadow-lg shadow-sky-500/20 disabled:opacity-40 transition"
+              className="flex-1 flex items-center justify-center gap-2 bg-white hover:bg-neutral-200 text-neutral-950 font-bold text-xs py-2.5 rounded-lg shadow-md disabled:opacity-40 transition"
             >
               {isGenerating ? (
                 <>
@@ -200,7 +200,7 @@ export const ElevenLabsVoicePanel: React.FC = () => {
             {audioPreviewUrl && (
               <button
                 onClick={togglePreviewAudio}
-                className="p-2.5 bg-neutral-800 hover:bg-neutral-700 text-sky-400 rounded-lg border border-neutral-700 transition"
+                className="p-2.5 bg-neutral-800 hover:bg-neutral-700 text-white rounded-lg border border-neutral-700 transition"
                 title="Preview Voice Audio"
               >
                 {isPlayingPreview ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
@@ -219,7 +219,7 @@ export const ElevenLabsVoicePanel: React.FC = () => {
               onChange={(e) => setCloneName(e.target.value)}
               placeholder="e.g. My Custom Voice"
               required
-              className="w-full bg-neutral-900 border border-neutral-800 rounded-lg p-2.5 text-xs text-white outline-none focus:border-sky-500"
+              className="w-full bg-neutral-900 border border-neutral-800 rounded-lg p-2.5 text-xs text-white outline-none focus:border-white"
             />
           </div>
 
@@ -230,13 +230,13 @@ export const ElevenLabsVoicePanel: React.FC = () => {
               value={cloneDesc}
               onChange={(e) => setCloneDesc(e.target.value)}
               placeholder="e.g. Warm conversational male voice"
-              className="w-full bg-neutral-900 border border-neutral-800 rounded-lg p-2.5 text-xs text-white outline-none focus:border-sky-500"
+              className="w-full bg-neutral-900 border border-neutral-800 rounded-lg p-2.5 text-xs text-white outline-none focus:border-white"
             />
           </div>
 
           <div>
             <label className="text-xs font-semibold text-neutral-400 mb-1 block">Audio Samples (Upload MP3/WAV)</label>
-            <div className="border-2 border-dashed border-neutral-800 hover:border-sky-500/60 rounded-xl p-4 text-center cursor-pointer transition">
+            <div className="border-2 border-dashed border-neutral-800 hover:border-neutral-600 rounded-xl p-4 text-center cursor-pointer transition">
               <input
                 type="file"
                 accept="audio/*"
@@ -246,7 +246,7 @@ export const ElevenLabsVoicePanel: React.FC = () => {
                 id="voice-sample-upload"
               />
               <label htmlFor="voice-sample-upload" className="cursor-pointer flex flex-col items-center gap-2">
-                <Upload className="w-5 h-5 text-sky-400" />
+                <Upload className="w-5 h-5 text-white" />
                 <span className="text-xs text-neutral-300 font-medium">
                   {cloneFiles.length > 0 ? `${cloneFiles.length} file(s) attached` : 'Click to upload speech sample audio'}
                 </span>
@@ -257,7 +257,7 @@ export const ElevenLabsVoicePanel: React.FC = () => {
           <button
             type="submit"
             disabled={isCloning || !cloneName || cloneFiles.length === 0}
-            className="mt-2 flex items-center justify-center gap-2 bg-sky-500 hover:bg-sky-400 text-neutral-950 font-bold text-xs py-2.5 rounded-lg disabled:opacity-40 transition"
+            className="mt-2 flex items-center justify-center gap-2 bg-white hover:bg-neutral-200 text-neutral-950 font-bold text-xs py-2.5 rounded-lg disabled:opacity-40 transition"
           >
             {isCloning ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mic className="w-4 h-4" />}
             <span>Clone Voice Now</span>

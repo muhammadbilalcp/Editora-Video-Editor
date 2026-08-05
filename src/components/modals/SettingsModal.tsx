@@ -30,14 +30,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
         </button>
 
         <h2 className="text-base font-bold text-white uppercase tracking-wider flex items-center gap-2 mb-4">
-          <Settings className="w-5 h-5 text-sky-400" />
+          <Settings className="w-5 h-5 text-white" />
           Editor Settings & Shortcuts
         </h2>
 
         {/* Shortcuts */}
         <div className="space-y-3">
           <h3 className="text-xs font-bold text-neutral-400 uppercase tracking-wider flex items-center gap-1.5">
-            <Keyboard className="w-4 h-4 text-amber-400" />
+            <Keyboard className="w-4 h-4 text-white" />
             Keyboard Shortcuts
           </h3>
 
@@ -45,7 +45,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
             {shortcuts.map((sc) => (
               <div key={sc.key} className="py-2 flex items-center justify-between text-xs">
                 <span className="text-neutral-300 font-medium">{sc.desc}</span>
-                <kbd className="bg-neutral-900 border border-neutral-700 text-sky-400 font-mono text-[10px] px-2 py-1 rounded">
+                <kbd className="bg-neutral-900 border border-neutral-700 text-white font-mono text-[10px] px-2 py-1 rounded">
                   {sc.key}
                 </kbd>
               </div>

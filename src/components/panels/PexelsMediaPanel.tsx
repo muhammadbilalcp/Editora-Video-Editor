@@ -46,7 +46,7 @@ export const PexelsMediaPanel: React.FC = () => {
       addClipToTrack({
         type: 'video',
         src: item.videoUrl || item.previewUrl,
-        name: `Pexels Video #${item.id}`,
+        name: `Stock Video #${item.id}`,
         thumbnail: item.previewUrl,
         duration: item.duration || 8,
       });
@@ -54,7 +54,7 @@ export const PexelsMediaPanel: React.FC = () => {
       addClipToTrack({
         type: 'image',
         src: item.videoUrl || item.previewUrl,
-        name: `Pexels Photo #${item.id}`,
+        name: `Stock Photo #${item.id}`,
         thumbnail: item.previewUrl,
         duration: 5,
       });
@@ -65,8 +65,8 @@ export const PexelsMediaPanel: React.FC = () => {
     <div className="p-4 flex flex-col h-full overflow-y-auto">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-          <Film className="w-4 h-4 text-sky-400" />
-          Pexels Stock Media
+          <Film className="w-4 h-4 text-white" />
+          Editora Stock Media
         </h2>
 
         {/* Tab Switcher */}
@@ -74,7 +74,7 @@ export const PexelsMediaPanel: React.FC = () => {
           <button
             onClick={() => setActiveTab('video')}
             className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold transition ${
-              activeTab === 'video' ? 'bg-sky-500 text-neutral-950 shadow' : 'text-neutral-400 hover:text-white'
+              activeTab === 'video' ? 'bg-white text-neutral-950 shadow' : 'text-neutral-400 hover:text-white'
             }`}
           >
             <Film className="w-3.5 h-3.5" />
@@ -83,7 +83,7 @@ export const PexelsMediaPanel: React.FC = () => {
           <button
             onClick={() => setActiveTab('photo')}
             className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold transition ${
-              activeTab === 'photo' ? 'bg-sky-500 text-neutral-950 shadow' : 'text-neutral-400 hover:text-white'
+              activeTab === 'photo' ? 'bg-white text-neutral-950 shadow' : 'text-neutral-400 hover:text-white'
             }`}
           >
             <ImageIcon className="w-3.5 h-3.5" />
@@ -99,7 +99,7 @@ export const PexelsMediaPanel: React.FC = () => {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={activeTab === 'video' ? 'Search 4K/HD stock videos...' : 'Search stock photos...'}
-          className="w-full bg-neutral-900 border border-neutral-800 rounded-lg pl-9 pr-4 py-2 text-xs text-white placeholder-neutral-500 focus:border-sky-500 outline-none transition"
+          className="w-full bg-neutral-900 border border-neutral-800 rounded-lg pl-9 pr-4 py-2 text-xs text-white placeholder-neutral-500 focus:border-white outline-none transition"
         />
         <Search className="w-4 h-4 text-neutral-500 absolute left-3 top-2.5" />
       </form>
@@ -107,7 +107,7 @@ export const PexelsMediaPanel: React.FC = () => {
       {/* Media Grid */}
       {loading ? (
         <div className="flex-1 flex items-center justify-center py-12">
-          <Loader2 className="w-6 h-6 text-sky-400 animate-spin" />
+          <Loader2 className="w-6 h-6 text-white animate-spin" />
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-2.5 flex-1 overflow-y-auto">
@@ -115,7 +115,7 @@ export const PexelsMediaPanel: React.FC = () => {
             <div
               key={item.id}
               onClick={() => handleImportMedia(item)}
-              className="group relative aspect-video bg-neutral-900 border border-neutral-800 rounded-lg overflow-hidden cursor-pointer hover:border-sky-500 transition shadow"
+              className="group relative aspect-video bg-neutral-900 border border-neutral-800 rounded-lg overflow-hidden cursor-pointer hover:border-white transition shadow"
             >
               <img
                 src={item.previewUrl}
@@ -130,7 +130,7 @@ export const PexelsMediaPanel: React.FC = () => {
               )}
 
               <div className="absolute inset-0 bg-neutral-950/60 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-1 text-white text-xs font-semibold transition">
-                <Plus className="w-4 h-4 text-sky-400" />
+                <Plus className="w-4 h-4 text-white" />
                 <span>Add Clip</span>
               </div>
             </div>

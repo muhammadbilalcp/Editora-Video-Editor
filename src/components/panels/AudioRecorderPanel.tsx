@@ -99,7 +99,7 @@ export const AudioRecorderPanel: React.FC = () => {
       {recordedUrl && !isRecording && (
         <button
           onClick={handleAddToTimeline}
-          className="flex items-center gap-2 bg-sky-500 hover:bg-sky-400 text-neutral-950 font-bold text-xs px-5 py-2.5 rounded-lg shadow-lg shadow-sky-500/20 transition"
+          className="flex items-center gap-2 bg-white hover:bg-neutral-200 text-neutral-950 font-bold text-xs px-5 py-2.5 rounded-lg shadow-md transition"
         >
           <Plus className="w-4 h-4" />
           <span>Add Voiceover to Timeline</span>

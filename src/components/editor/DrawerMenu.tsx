@@ -58,12 +58,12 @@ export const DrawerMenu: React.FC<DrawerMenuProps> = ({
   };
 
   const navItems = [
-    { label: 'Pexels Media Library', icon: Film, panel: 'media' as ActiveToolPanel, accent: 'text-sky-400' },
-    { label: 'AI Voiceovers (Pro Plan)', icon: Sparkles, panel: 'voice' as ActiveToolPanel, accent: 'text-amber-400' },
-    { label: 'Text & Titles', icon: Type, panel: 'text' as ActiveToolPanel, accent: 'text-purple-400' },
-    { label: 'GIPHY GIFs & Stickers', icon: ImageIcon, panel: 'giphy' as ActiveToolPanel, accent: 'text-emerald-400' },
-    { label: 'Clip Inspector', icon: Sliders, panel: 'inspector' as ActiveToolPanel, accent: 'text-blue-400' },
-    { label: 'Voiceover Recorder', icon: Mic, panel: 'recorder' as ActiveToolPanel, accent: 'text-rose-400' },
+    { label: 'Editora Stock Media', icon: Film, panel: 'media' as ActiveToolPanel, accent: 'text-white' },
+    { label: 'AI Voiceovers (Pro Plan)', icon: Sparkles, panel: 'voice' as ActiveToolPanel, accent: 'text-white' },
+    { label: 'Text & Titles', icon: Type, panel: 'text' as ActiveToolPanel, accent: 'text-white' },
+    { label: 'GIFs & Stickers', icon: ImageIcon, panel: 'giphy' as ActiveToolPanel, accent: 'text-white' },
+    { label: 'Clip Inspector', icon: Sliders, panel: 'inspector' as ActiveToolPanel, accent: 'text-white' },
+    { label: 'Voiceover Recorder', icon: Mic, panel: 'recorder' as ActiveToolPanel, accent: 'text-white' },
   ];
 
   return (
@@ -102,9 +102,9 @@ export const DrawerMenu: React.FC<DrawerMenuProps> = ({
                 setViewMode('home');
                 setIsDrawerMenuOpen(false);
               }}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold text-xs hover:bg-sky-500/10 hover:text-sky-400 transition"
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold text-xs hover:bg-neutral-800 transition"
             >
-              <Home className="w-4 h-4 text-sky-400" />
+              <Home className="w-4 h-4 text-white" />
               <span>Home Screen</span>
             </button>
 
@@ -153,9 +153,9 @@ export const DrawerMenu: React.FC<DrawerMenuProps> = ({
             >
               <div className="flex items-center gap-3">
                 {theme === 'light' ? (
-                  <Sun className="w-4 h-4 text-amber-500 fill-current" />
+                  <Sun className="w-4 h-4 text-neutral-800 fill-current" />
                 ) : (
-                  <Moon className="w-4 h-4 text-sky-400 fill-current" />
+                  <Moon className="w-4 h-4 text-white fill-current" />
                 )}
                 <span>Eye Comfort: {theme === 'light' ? 'Sunlight Mode' : 'Night Mode'}</span>
               </div>
@@ -191,7 +191,7 @@ export const DrawerMenu: React.FC<DrawerMenuProps> = ({
             {user?.photoURL ? (
               <img src={user.photoURL} alt="User" className="w-8 h-8 rounded-full object-cover" />
             ) : (
-              <div className="w-8 h-8 rounded-full bg-sky-500 text-neutral-950 font-bold flex items-center justify-center text-xs">
+              <div className="w-8 h-8 rounded-full bg-white text-neutral-950 font-bold flex items-center justify-center text-xs">
                 {user?.email?.[0].toUpperCase() || 'E'}
               </div>
             )}
@@ -206,7 +206,7 @@ export const DrawerMenu: React.FC<DrawerMenuProps> = ({
               setIsDrawerMenuOpen(false);
               onOpenAuth();
             }}
-            className="p-2 bg-neutral-800 hover:bg-neutral-700 text-sky-400 rounded-lg text-xs font-bold transition"
+            className="p-2 bg-neutral-800 hover:bg-neutral-700 text-white rounded-lg text-xs font-bold transition"
           >
             <User className="w-4 h-4" />
           </button>
