@@ -18,6 +18,7 @@ import {
   Moon,
   User,
   Zap,
+  Trash2,
 } from 'lucide-react';
 
 interface DrawerMenuProps {
@@ -34,6 +35,8 @@ export const DrawerMenu: React.FC<DrawerMenuProps> = ({
   onOpenSettings,
 }) => {
   const {
+    project,
+    deleteProject,
     isDrawerMenuOpen,
     setIsDrawerMenuOpen,
     setViewMode,
@@ -181,6 +184,20 @@ export const DrawerMenu: React.FC<DrawerMenuProps> = ({
             >
               <Settings className="w-4 h-4 text-neutral-400" />
               <span>Keyboard Shortcuts & Settings</span>
+            </button>
+
+            <button
+              onClick={async () => {
+                if (window.confirm(`Are you sure you want to delete "${project.name}" permanently?`)) {
+                  setIsDrawerMenuOpen(false);
+                  await deleteProject(project.id);
+                  setViewMode('home');
+                }
+              }}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold text-xs hover:bg-rose-500/10 text-rose-400 transition"
+            >
+              <Trash2 className="w-4 h-4 text-rose-400" />
+              <span>Delete Current Project</span>
             </button>
           </div>
         </div>

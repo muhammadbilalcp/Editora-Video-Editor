@@ -25,7 +25,6 @@ import {
   Film,
   Music,
 } from 'lucide-react';
-import { Track, Clip } from '../../types/editor';
 
 export const Timeline: React.FC = () => {
   const {
@@ -39,9 +38,6 @@ export const Timeline: React.FC = () => {
     splitClipAtPlayhead,
     removeClip,
     duplicateClip,
-    updateClipSpeed,
-    freezeFrame,
-    toggleReverseClip,
     zoomLevel,
     setZoomLevel,
     setActivePanel,
@@ -50,7 +46,9 @@ export const Timeline: React.FC = () => {
   } = useEditor();
 
   const timelineRef = useRef<HTMLDivElement | null>(null);
-  const [isScrubbing, setIsScrubbing] = useState(false);
+  const isProgrammaticScroll = useRef(false);
+  const [containerHalfWidth, setContainerHalfWidth] = useState(300);
+
   const [draggingTrim, setDraggingTrim] = useState<{
     clipId: string;
     side: 'left' | 'right';
@@ -59,69 +57,81 @@ export const Timeline: React.FC = () => {
     initialDuration: number;
   } | null>(null);
 
-  const totalWidthPx = Math.max(project.duration * zoomLevel, 600);
+  const totalContentWidthPx = Math.max(project.duration * zoomLevel, 600);
 
-  // Handle Playhead Scrubbing on Timeline Header or Background
+  // Keep track of scroll container half-width for centered playhead alignment
+  useEffect(() => {
+    const updateHalfWidth = () => {
+      if (timelineRef.current) {
+        setContainerHalfWidth(Math.floor(timelineRef.current.clientWidth / 2));
+      }
+    };
+    updateHalfWidth();
+    window.addEventListener('resize', updateHalfWidth);
+    return () => window.removeEventListener('resize', updateHalfWidth);
+  }, []);
+
+  // Update scrollLeft whenever currentTime changes (Playback or programmatic scrub)
+  useEffect(() => {
+    if (timelineRef.current) {
+      isProgrammaticScroll.current = true;
+      timelineRef.current.scrollLeft = currentTime * zoomLevel;
+      const timer = setTimeout(() => {
+        isProgrammaticScroll.current = false;
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [currentTime, zoomLevel]);
+
+  // Handle User Manual Horizontal Scroll/Drag on Timeline
+  const handleScroll = () => {
+    if (!timelineRef.current || isProgrammaticScroll.current) return;
+    const scrollPos = timelineRef.current.scrollLeft;
+    const newTime = Math.max(0, Math.min(scrollPos / zoomLevel, project.duration));
+    setCurrentTime(newTime);
+  };
+
+  // Click on Timeline Ruler or Track Background to jump playhead position
   const handleTimelineClick = (e: React.MouseEvent) => {
     if (!timelineRef.current) return;
     const rect = timelineRef.current.getBoundingClientRect();
-    const clickX = e.clientX - rect.left + timelineRef.current.scrollLeft;
-    const clickedTime = Math.max(0, Math.min(clickX / zoomLevel, project.duration));
-    setCurrentTime(clickedTime);
+    const clickX = e.clientX - rect.left;
+    const currentScroll = timelineRef.current.scrollLeft;
+    const targetTime = Math.max(
+      0,
+      Math.min((currentScroll + clickX - containerHalfWidth) / zoomLevel, project.duration)
+    );
+    setCurrentTime(targetTime);
   };
 
-  const handleScrubStart = (e: React.MouseEvent) => {
-    // Only scrub if clicking on ruler or track background, not on buttons/clips directly
-    setIsScrubbing(true);
-    handleTimelineClick(e);
-  };
-
-  // Auto-scroll timeline to keep playhead centered during playback
+  // Window Listeners for Clip Trimming
   useEffect(() => {
-    if (timelineRef.current && isPlaying) {
-      const targetScroll = currentTime * zoomLevel - timelineRef.current.clientWidth / 2;
-      timelineRef.current.scrollLeft = Math.max(0, targetScroll);
-    }
-  }, [currentTime, isPlaying, zoomLevel]);
+    if (!draggingTrim) return;
 
-  // Window-wide Mouse Move / Up Listeners for Trim and Scrubbing
-  useEffect(() => {
-    if (!isScrubbing && !draggingTrim) return;
-
-    const handleWindowMouseMove = (e: MouseEvent) => {
-      if (isScrubbing && timelineRef.current) {
-        const rect = timelineRef.current.getBoundingClientRect();
-        const clickX = e.clientX - rect.left + timelineRef.current.scrollLeft;
-        const clickedTime = Math.max(0, Math.min(clickX / zoomLevel, project.duration));
-        setCurrentTime(clickedTime);
-      } else if (draggingTrim) {
-        const dx = (e.clientX - draggingTrim.initialX) / zoomLevel;
-        if (draggingTrim.side === 'left') {
-          const newStart = Math.max(0, draggingTrim.initialStart + dx);
-          const newDur = Math.max(0.5, draggingTrim.initialDuration - dx);
-          trimClip(draggingTrim.clipId, newStart, newDur);
-        } else {
-          const newDur = Math.max(0.5, draggingTrim.initialDuration + dx);
-          trimClip(draggingTrim.clipId, draggingTrim.initialStart, newDur);
-        }
+    const handleMouseMove = (e: MouseEvent) => {
+      const dx = (e.clientX - draggingTrim.initialX) / zoomLevel;
+      if (draggingTrim.side === 'left') {
+        const newStart = Math.max(0, draggingTrim.initialStart + dx);
+        const newDur = Math.max(0.5, draggingTrim.initialDuration - dx);
+        trimClip(draggingTrim.clipId, newStart, newDur);
+      } else {
+        const newDur = Math.max(0.5, draggingTrim.initialDuration + dx);
+        trimClip(draggingTrim.clipId, draggingTrim.initialStart, newDur);
       }
     };
 
-    const handleWindowMouseUp = () => {
-      setIsScrubbing(false);
+    const handleMouseUp = () => {
       setDraggingTrim(null);
     };
 
-    window.addEventListener('mousemove', handleWindowMouseMove);
-    window.addEventListener('mouseup', handleWindowMouseUp);
-
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
     return () => {
-      window.removeEventListener('mousemove', handleWindowMouseMove);
-      window.removeEventListener('mouseup', handleWindowMouseUp);
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isScrubbing, draggingTrim, zoomLevel, project.duration, setCurrentTime, trimClip]);
+  }, [draggingTrim, zoomLevel, trimClip]);
 
-  // Toggle Track Visibility / Mute / Lock
   const toggleTrackMute = (trackId: string) => {
     setProject((prev) => ({
       ...prev,
@@ -142,18 +152,22 @@ export const Timeline: React.FC = () => {
         theme === 'light' ? 'bg-slate-100 border-slate-300 text-slate-900' : 'bg-neutral-900 border-neutral-800 text-white'
       }`}
     >
-      {/* Horizontal Action Toolbar */}
+      {/* CapCut Toolbar */}
       <CapCutToolbar />
 
-      {/* Timeline Controls & Zoom Bar */}
-      <div className={`h-8 border-b px-3 flex items-center justify-between text-xs shrink-0 ${
-        theme === 'light' ? 'bg-slate-200 border-slate-300 text-slate-700' : 'bg-neutral-900/90 border-neutral-800/80 text-neutral-400'
-      }`}>
+      {/* Timeline Controls Header */}
+      <div
+        className={`h-8 border-b px-3 flex items-center justify-between text-xs shrink-0 ${
+          theme === 'light'
+            ? 'bg-slate-200 border-slate-300 text-slate-700'
+            : 'bg-neutral-900/90 border-neutral-800/80 text-neutral-400'
+        }`}
+      >
         <div className="flex items-center gap-2">
           <span className="text-[10px] font-bold uppercase tracking-wider text-white">Timeline Tracks</span>
         </div>
 
-        {/* Zoom Scale Controls */}
+        {/* Zoom Controls */}
         <div className="flex items-center gap-2">
           <ZoomOut className="w-3.5 h-3.5 text-neutral-400" />
           <input
@@ -168,11 +182,10 @@ export const Timeline: React.FC = () => {
         </div>
       </div>
 
-      {/* Main Multi-Track Scroll Canvas */}
+      {/* Main Multi-Track Canvas View */}
       <div className="flex-1 flex overflow-hidden relative">
         {/* Track Control Headers (Left Column) */}
-        <div className="w-36 md:w-44 bg-neutral-950 border-r border-neutral-900 flex flex-col shrink-0 z-10">
-          {/* Header Controls: Mute clip audio & Cover */}
+        <div className="w-36 md:w-44 bg-neutral-950 border-r border-neutral-900 flex flex-col shrink-0 z-20">
           <div className="h-8 border-b border-neutral-900 px-2 flex items-center justify-between gap-1 text-[10px] font-bold text-neutral-300">
             <button
               onClick={() => {
@@ -241,7 +254,6 @@ export const Timeline: React.FC = () => {
               </div>
             ))}
 
-            {/* Quick Add Track Rows */}
             <div
               onClick={() => setActivePanel('voice')}
               className="h-9 px-2 flex items-center gap-2 text-[11px] font-semibold text-neutral-400 hover:text-white cursor-pointer hover:bg-neutral-900 transition"
@@ -260,106 +272,113 @@ export const Timeline: React.FC = () => {
           </div>
         </div>
 
-        {/* Timeline Tracks & Scrubber (Right Column) */}
-        <div
-          className="flex-1 overflow-x-auto overflow-y-auto relative"
-          ref={timelineRef}
-          onMouseDown={handleScrubStart}
-        >
-          <div style={{ width: `${totalWidthPx}px` }} className="relative min-h-full">
-            {/* Time Ruler Bar */}
-            <div className="h-7 border-b border-neutral-800 bg-neutral-900/80 sticky top-0 z-20 cursor-pointer flex items-center">
-              {Array.from({ length: Math.ceil(project.duration) + 1 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="absolute text-[9px] font-mono text-neutral-500 border-l border-neutral-800 h-3 pl-1 top-2"
-                  style={{ left: `${i * zoomLevel}px` }}
-                >
-                  {formatTimecode(i)}
-                </div>
-              ))}
-            </div>
+        {/* Timeline Tracks & Scrolling Section */}
+        <div className="flex-1 relative overflow-hidden flex flex-col">
+          {/* STATIONARY CENTER PLAYHEAD NEEDLE */}
+          <div className="absolute top-0 bottom-0 left-1/2 w-0.5 bg-rose-500 z-30 pointer-events-none -translate-x-1/2 flex flex-col items-center">
+            <div className="w-3.5 h-3.5 bg-rose-500 rotate-45 rounded-sm shadow-md border border-white -mt-1.5 shrink-0" />
+          </div>
 
-            {/* Red Playhead Line & Draggable Handle */}
+          {/* Scrollable Tracks Area */}
+          <div
+            ref={timelineRef}
+            onScroll={handleScroll}
+            onClick={handleTimelineClick}
+            className="flex-1 overflow-x-auto overflow-y-auto relative scrollbar-thin"
+          >
+            {/* Tracks Outer Wrapper with Centered Half-Width Padding */}
             <div
-              onMouseDown={(e) => {
-                e.stopPropagation();
-                handleScrubStart(e);
+              style={{
+                paddingLeft: `${containerHalfWidth}px`,
+                paddingRight: `${containerHalfWidth}px`,
+                width: `${totalContentWidthPx + containerHalfWidth * 2}px`,
               }}
-              className="absolute top-0 bottom-0 w-0.5 bg-rose-500 z-30 cursor-ew-resize group"
-              style={{ left: `${currentTime * zoomLevel}px` }}
+              className="relative min-h-full"
             >
-              <div className="w-4 h-4 bg-rose-500 -translate-x-[7px] rotate-45 rounded-sm shadow-lg border border-white flex items-center justify-center cursor-grab active:cursor-grabbing group-hover:scale-125 transition-transform" />
-            </div>
+              {/* Time Ruler Bar */}
+              <div className="h-7 border-b border-neutral-800 bg-neutral-900/90 sticky top-0 z-10 cursor-pointer flex items-center">
+                {Array.from({ length: Math.ceil(project.duration) + 1 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="absolute text-[9px] font-mono text-neutral-500 border-l border-neutral-800 h-3 pl-1 top-2 select-none"
+                    style={{ left: `${i * zoomLevel}px` }}
+                  >
+                    {formatTimecode(i)}
+                  </div>
+                ))}
+              </div>
 
-            {/* Tracks Stack */}
-            <div className="divide-y divide-neutral-800/60">
-              {project.tracks.map((track) => (
-                <div key={track.id} className="h-10 relative bg-neutral-900/40">
-                  {track.clips.map((clip) => {
-                    const isSelected = clip.id === selectedClipId;
-                    const leftPx = clip.startTime * zoomLevel;
-                    const widthPx = clip.duration * zoomLevel;
+              {/* Tracks Stack */}
+              <div className="divide-y divide-neutral-800/60">
+                {project.tracks.map((track) => (
+                  <div key={track.id} className="h-10 relative bg-neutral-900/40">
+                    {track.clips.map((clip) => {
+                      const isSelected = clip.id === selectedClipId;
+                      const leftPx = clip.startTime * zoomLevel;
+                      const widthPx = clip.duration * zoomLevel;
 
-                    return (
-                      <div
-                        key={clip.id}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedClipId(clip.id);
-                        }}
-                        style={{
-                          left: `${leftPx}px`,
-                          width: `${widthPx}px`,
-                        }}
-                        className={`absolute top-1 bottom-1 rounded-md px-1 flex items-center justify-between text-xs font-medium cursor-pointer border shadow-sm transition-all overflow-hidden ${
-                          isSelected
-                            ? 'bg-neutral-800 border-white text-white ring-2 ring-white/50'
-                            : 'bg-neutral-800/80 border-neutral-700 text-neutral-200 hover:border-neutral-500'
-                        }`}
-                      >
-                        {/* Left Trim Handle */}
+                      return (
                         <div
-                          onMouseDown={(e) => {
+                          key={clip.id}
+                          onClick={(e) => {
                             e.stopPropagation();
-                            setDraggingTrim({
-                              clipId: clip.id,
-                              side: 'left',
-                              initialX: e.clientX,
-                              initialStart: clip.startTime,
-                              initialDuration: clip.duration,
-                            });
+                            setSelectedClipId(clip.id);
                           }}
-                          className="absolute left-0 top-0 bottom-0 w-2.5 bg-white/70 hover:bg-white cursor-ew-resize rounded-l-md flex items-center justify-center shadow z-10"
-                          title="Drag to shorten/trim start of clip"
-                        >
-                          <div className="w-0.5 h-3 bg-neutral-950/70 rounded" />
-                        </div>
-
-                        <span className="truncate text-[10px] px-3 font-semibold select-none">{clip.name}</span>
-
-                        {/* Right Trim Handle */}
-                        <div
-                          onMouseDown={(e) => {
-                            e.stopPropagation();
-                            setDraggingTrim({
-                              clipId: clip.id,
-                              side: 'right',
-                              initialX: e.clientX,
-                              initialStart: clip.startTime,
-                              initialDuration: clip.duration,
-                            });
+                          style={{
+                            left: `${leftPx}px`,
+                            width: `${widthPx}px`,
                           }}
-                          className="absolute right-0 top-0 bottom-0 w-2.5 bg-white/70 hover:bg-white cursor-ew-resize rounded-r-md flex items-center justify-center shadow z-10"
-                          title="Drag to shorten/trim end of clip"
+                          className={`absolute top-1 bottom-1 rounded-md px-1 flex items-center justify-between text-xs font-medium cursor-pointer border shadow-sm transition-all overflow-hidden ${
+                            isSelected
+                              ? 'bg-neutral-800 border-white text-white ring-2 ring-white/50 z-10'
+                              : 'bg-neutral-800/80 border-neutral-700 text-neutral-200 hover:border-neutral-500'
+                          }`}
                         >
-                          <div className="w-0.5 h-3 bg-neutral-950/70 rounded" />
+                          {/* Left Trim Handle */}
+                          <div
+                            onMouseDown={(e) => {
+                              e.stopPropagation();
+                              setDraggingTrim({
+                                clipId: clip.id,
+                                side: 'left',
+                                initialX: e.clientX,
+                                initialStart: clip.startTime,
+                                initialDuration: clip.duration,
+                              });
+                            }}
+                            className="absolute left-0 top-0 bottom-0 w-2.5 bg-white/70 hover:bg-white cursor-ew-resize rounded-l-md flex items-center justify-center shadow z-10"
+                            title="Drag to trim start of clip"
+                          >
+                            <div className="w-0.5 h-3 bg-neutral-950/70 rounded" />
+                          </div>
+
+                          <span className="truncate text-[10px] px-3 font-semibold select-none">
+                            {clip.name}
+                          </span>
+
+                          {/* Right Trim Handle */}
+                          <div
+                            onMouseDown={(e) => {
+                              e.stopPropagation();
+                              setDraggingTrim({
+                                clipId: clip.id,
+                                side: 'right',
+                                initialX: e.clientX,
+                                initialStart: clip.startTime,
+                                initialDuration: clip.duration,
+                              });
+                            }}
+                            className="absolute right-0 top-0 bottom-0 w-2.5 bg-white/70 hover:bg-white cursor-ew-resize rounded-r-md flex items-center justify-center shadow z-10"
+                            title="Drag to trim end of clip"
+                          >
+                            <div className="w-0.5 h-3 bg-neutral-950/70 rounded" />
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ))}
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>

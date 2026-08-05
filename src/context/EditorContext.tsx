@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { Project, Track, Clip, AspectRatio, ClipType, TextSettings, ColorAdjustments, AudioSettings, TransformSettings } from '../types/editor';
-import { saveProjectToCloud } from '../services/firebase';
+import { saveProjectToCloud, deleteProjectFromCloud } from '../services/firebase';
 import { useAuth } from './AuthContext';
 
 export type ActiveToolPanel = 'media' | 'voice' | 'text' | 'giphy' | 'audio' | 'inspector' | 'recorder' | 'export' | 'projects' | 'settings';
@@ -64,6 +64,7 @@ interface EditorContextType {
   showToast: (msg: string) => void;
   saveProjectNow: () => Promise<void>;
   createNewProject: (name?: string, aspect?: AspectRatio) => void;
+  deleteProject: (projectId: string) => Promise<void>;
 }
 
 const DEFAULT_PROJECT: Project = {
@@ -120,6 +121,49 @@ const DEFAULT_PROJECT: Project = {
       clips: [],
     },
   ],
+};
+
+export const getLocalSavedProjects = (): Project[] => {
+  try {
+    const raw = localStorage.getItem('editora_saved_projects');
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+};
+
+export const saveProjectToLocalStorage = (proj: Project) => {
+  try {
+    localStorage.setItem('editora_current_project', JSON.stringify(proj));
+    const saved = getLocalSavedProjects();
+    const existingIdx = saved.findIndex((p) => p.id === proj.id);
+    let updated: Project[];
+    if (existingIdx >= 0) {
+      updated = saved.map((p) => (p.id === proj.id ? proj : p));
+    } else {
+      updated = [proj, ...saved];
+    }
+    localStorage.setItem('editora_saved_projects', JSON.stringify(updated.slice(0, 30)));
+  } catch (e) {
+    console.warn('LocalStorage save error:', e);
+  }
+};
+
+export const deleteProjectFromLocalStorage = (projId: string) => {
+  try {
+    const saved = getLocalSavedProjects();
+    const updated = saved.filter((p) => p.id !== projId);
+    localStorage.setItem('editora_saved_projects', JSON.stringify(updated));
+    const currentRaw = localStorage.getItem('editora_current_project');
+    if (currentRaw) {
+      const current = JSON.parse(currentRaw);
+      if (current.id === projId) {
+        localStorage.removeItem('editora_current_project');
+      }
+    }
+  } catch (e) {
+    console.warn('LocalStorage delete error:', e);
+  }
 };
 
 const EditorContext = createContext<EditorContextType | null>(null);
@@ -231,10 +275,10 @@ export const EditorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     });
   }, [pushHistory, recalculateDuration]);
 
-  // Debounced Cloud Autosave
+  // Debounced Cloud & Local Autosave
   const autosaveTimerRef = useRef<any>(null);
   useEffect(() => {
-    localStorage.setItem('editora_current_project', JSON.stringify(project));
+    saveProjectToLocalStorage(project);
 
     if (user) {
       setIsAutosaving(true);
@@ -248,13 +292,13 @@ export const EditorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, [project, user]);
 
   const saveProjectNow = async () => {
+    saveProjectToLocalStorage(project);
     if (user) {
       setIsAutosaving(true);
       await saveProjectToCloud(user.uid, project);
       setIsAutosaving(false);
       showToast('Project saved to cloud');
     } else {
-      localStorage.setItem('editora_current_project', JSON.stringify(project));
       showToast('Project saved locally');
     }
   };
@@ -273,7 +317,37 @@ export const EditorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setSelectedClipId(null);
     historyRef.current = [newProj];
     historyIndexRef.current = 0;
+    saveProjectToLocalStorage(newProj);
     showToast(`Created new project: ${name}`);
+  };
+
+  const deleteProject = async (projectId: string) => {
+    // 1. Remove from local storage list
+    deleteProjectFromLocalStorage(projectId);
+
+    // 2. Remove from cloud if signed in
+    if (user) {
+      await deleteProjectFromCloud(user.uid, projectId);
+    }
+
+    // 3. Reset active project if deleting the current project
+    if (project.id === projectId) {
+      const freshProj: Project = {
+        ...DEFAULT_PROJECT,
+        id: 'proj_' + Date.now(),
+        name: 'New Story',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      };
+      setProject(freshProj);
+      setCurrentTime(0);
+      setSelectedClipId(null);
+      historyRef.current = [freshProj];
+      historyIndexRef.current = 0;
+      saveProjectToLocalStorage(freshProj);
+    }
+
+    showToast('Project deleted');
   };
 
   // Timeline Operations
@@ -678,6 +752,7 @@ export const EditorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         showToast,
         saveProjectNow,
         createNewProject,
+        deleteProject,
       }}
     >
       {children}

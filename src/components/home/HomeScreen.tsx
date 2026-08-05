@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useEditor } from '../../context/EditorContext';
+import { useEditor, getLocalSavedProjects } from '../../context/EditorContext';
 import { useAuth } from '../../context/AuthContext';
 import { loadUserProjectsFromCloud, deleteProjectFromCloud } from '../../services/firebase';
 import { Project, AspectRatio } from '../../types/editor';
@@ -37,6 +37,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenAuth }) => {
   const {
     project,
     createNewProject,
+    deleteProject,
     setProject,
     setViewMode,
     theme,
@@ -54,15 +55,21 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenAuth }) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
-    const fetchCloudProjs = async () => {
+    const fetchAllProjects = async () => {
+      setLoading(true);
+      const localProjs = getLocalSavedProjects();
+      let cloudProjs: Project[] = [];
       if (user) {
-        setLoading(true);
-        const cloudProjs = await loadUserProjectsFromCloud(user.uid);
-        setSavedProjects(cloudProjs);
-        setLoading(false);
+        cloudProjs = await loadUserProjectsFromCloud(user.uid);
       }
+      const map = new Map<string, Project>();
+      localProjs.forEach((p) => map.set(p.id, p));
+      cloudProjs.forEach((p) => map.set(p.id, p));
+      const merged = Array.from(map.values()).sort((a, b) => b.updatedAt - a.updatedAt);
+      setSavedProjects(merged);
+      setLoading(false);
     };
-    fetchCloudProjs();
+    fetchAllProjects();
   }, [user]);
 
   const toggleFullscreen = () => {
@@ -77,22 +84,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenAuth }) => {
 
   const handleStartNewProject = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) {
-      onOpenAuth();
-      showToast('Please sign up or sign in to start creating projects!');
-      return;
-    }
     const title = projNameInput.trim() || 'My New Story';
     createNewProject(title, selectedAspect);
     setViewMode('editor');
   };
 
   const handleOpenExistingProject = (proj: Project) => {
-    if (!user) {
-      onOpenAuth();
-      showToast('Please sign up or sign in to open projects!');
-      return;
-    }
     setProject(proj);
     showToast(`Loaded: ${proj.name}`);
     setViewMode('editor');
@@ -100,11 +97,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenAuth }) => {
 
   const handleDeleteProject = async (e: React.MouseEvent, projId: string) => {
     e.stopPropagation();
-    if (!user) return;
-    if (confirm('Delete this project permanently?')) {
-      await deleteProjectFromCloud(user.uid, projId);
+    e.preventDefault();
+    if (window.confirm('Delete this project permanently?')) {
+      await deleteProject(projId);
       setSavedProjects((prev) => prev.filter((p) => p.id !== projId));
-      showToast('Project removed');
     }
   };
 

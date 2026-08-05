@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { useEditor } from '../../context/EditorContext';
+import { useEditor, getLocalSavedProjects } from '../../context/EditorContext';
 import { useAuth } from '../../context/AuthContext';
-import { loadUserProjectsFromCloud, deleteProjectFromCloud } from '../../services/firebase';
+import { loadUserProjectsFromCloud } from '../../services/firebase';
 import { Project, AspectRatio } from '../../types/editor';
 import { X, FolderOpen, Plus, Trash2, Smartphone, Monitor, Square, Clock, Cloud } from 'lucide-react';
 
@@ -11,7 +11,7 @@ interface ProjectsModalProps {
 }
 
 export const ProjectsModal: React.FC<ProjectsModalProps> = ({ isOpen, onClose }) => {
-  const { setProject, createNewProject, showToast } = useEditor();
+  const { setProject, createNewProject, deleteProject, showToast } = useEditor();
   const { user } = useAuth();
 
   const [projects, setProjects] = useState<Project[]>([]);
@@ -19,17 +19,24 @@ export const ProjectsModal: React.FC<ProjectsModalProps> = ({ isOpen, onClose })
   const [newProjName, setNewProjName] = useState('');
   const [selectedAspect, setSelectedAspect] = useState<AspectRatio>('9:16');
 
-  const fetchCloudProjects = async () => {
-    if (!user) return;
+  const fetchProjects = async () => {
     setLoading(true);
-    const cloudProjs = await loadUserProjectsFromCloud(user.uid);
-    setProjects(cloudProjs);
+    const localProjs = getLocalSavedProjects();
+    let cloudProjs: Project[] = [];
+    if (user) {
+      cloudProjs = await loadUserProjectsFromCloud(user.uid);
+    }
+    const map = new Map<string, Project>();
+    localProjs.forEach((p) => map.set(p.id, p));
+    cloudProjs.forEach((p) => map.set(p.id, p));
+    const merged = Array.from(map.values()).sort((a, b) => b.updatedAt - a.updatedAt);
+    setProjects(merged);
     setLoading(false);
   };
 
   useEffect(() => {
     if (isOpen) {
-      fetchCloudProjects();
+      fetchProjects();
     }
   }, [isOpen, user]);
 
@@ -43,11 +50,10 @@ export const ProjectsModal: React.FC<ProjectsModalProps> = ({ isOpen, onClose })
 
   const handleDeleteProject = async (e: React.MouseEvent, projId: string) => {
     e.stopPropagation();
-    if (!user) return;
-    if (confirm('Are you sure you want to delete this project?')) {
-      await deleteProjectFromCloud(user.uid, projId);
+    e.preventDefault();
+    if (window.confirm('Are you sure you want to delete this project?')) {
+      await deleteProject(projId);
       setProjects((prev) => prev.filter((p) => p.id !== projId));
-      showToast('Project deleted');
     }
   };
 
