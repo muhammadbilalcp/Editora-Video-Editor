@@ -21,6 +21,20 @@ interface EditorContextType {
   zoomLevel: number; // Pixels per second in timeline
   setZoomLevel: (zoom: number | ((prev: number) => number)) => void;
   
+  // App Navigation & Theme
+  viewMode: 'home' | 'editor';
+  setViewMode: (mode: 'home' | 'editor') => void;
+  theme: 'dark' | 'light';
+  toggleTheme: () => void;
+  isDrawerMenuOpen: boolean;
+  setIsDrawerMenuOpen: (open: boolean) => void;
+
+  // Crop Modal
+  isCropModalOpen: boolean;
+  cropClipId: string | null;
+  openCropModal: (clipId: string) => void;
+  closeCropModal: () => void;
+
   // History
   canUndo: boolean;
   canRedo: boolean;
@@ -33,6 +47,7 @@ interface EditorContextType {
   splitClipAtPlayhead: (clipId: string) => void;
   trimClip: (clipId: string, newStartTime: number, newDuration: number, newSourceStart?: number) => void;
   duplicateClip: (clipId: string) => void;
+  extractAudioFromClip: (clipId: string) => void;
   updateClipTransform: (clipId: string, transform: Partial<TransformSettings>) => void;
   updateClipColor: (clipId: string, color: Partial<ColorAdjustments>) => void;
   updateClipFilter: (clipId: string, filter: string) => void;
@@ -127,6 +142,34 @@ export const EditorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [zoomLevel, setZoomLevel] = useState<number>(30); // 30px per sec
   const [isAutosaving, setIsAutosaving] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // App Navigation & Theme
+  const [viewMode, setViewMode] = useState<'home' | 'editor'>('home');
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    return (localStorage.getItem('editora_theme') as 'dark' | 'light') || 'dark';
+  });
+  const [isDrawerMenuOpen, setIsDrawerMenuOpen] = useState<boolean>(false);
+
+  // Crop Modal state
+  const [isCropModalOpen, setIsCropModalOpen] = useState<boolean>(false);
+  const [cropClipId, setCropClipId] = useState<string | null>(null);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(nextTheme);
+    localStorage.setItem('editora_theme', nextTheme);
+    showToast(`Switched to ${nextTheme === 'dark' ? 'Night Dark' : 'Sunlight Light'} theme`);
+  };
+
+  const openCropModal = (clipId: string) => {
+    setCropClipId(clipId);
+    setIsCropModalOpen(true);
+  };
+
+  const closeCropModal = () => {
+    setIsCropModalOpen(false);
+    setCropClipId(null);
+  };
 
   // Undo / Redo History Stack
   const historyRef = useRef<Project[]>([project]);
@@ -389,6 +432,43 @@ export const EditorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }));
   };
 
+  const extractAudioFromClip = (clipId: string) => {
+    updateProjectState((prev) => {
+      let extractedClip: Clip | null = null;
+
+      const newTracks = prev.tracks.map((tr) => {
+        const target = tr.clips.find((c) => c.id === clipId);
+        if (target) {
+          extractedClip = target;
+          // Mute original video clip's audio
+          return {
+            ...tr,
+            clips: tr.clips.map((c) => (c.id === clipId ? { ...c, audioSettings: { ...c.audioSettings, muted: true, volume: 0 } } : c)),
+          };
+        }
+        return tr;
+      });
+
+      if (!extractedClip) return prev;
+
+      // Add new audio clip to audio track
+      const audioTrack = newTracks.find((t) => t.type === 'audio') || newTracks[newTracks.length - 1];
+      const audioCopy: Clip = {
+        ...extractedClip,
+        id: 'clip_audio_' + Date.now(),
+        trackId: audioTrack.id,
+        type: 'audio',
+        name: `Audio from ${extractedClip.name}`,
+        audioSettings: { volume: 1, muted: false, fadeIn: 0, fadeOut: 0, speed: extractedClip.speed },
+      };
+
+      const finalTracks = newTracks.map((t) => (t.id === audioTrack.id ? { ...t, clips: [...t.clips, audioCopy] } : t));
+      return { ...prev, tracks: finalTracks };
+    });
+
+    showToast('Extracted audio to new music track');
+  };
+
   const duplicateClip = (clipId: string) => {
     let duplicatedName = 'Clip';
     updateProjectState((prev) => {
@@ -528,6 +608,16 @@ export const EditorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setActivePanel,
         zoomLevel,
         setZoomLevel,
+        viewMode,
+        setViewMode,
+        theme,
+        toggleTheme,
+        isDrawerMenuOpen,
+        setIsDrawerMenuOpen,
+        isCropModalOpen,
+        cropClipId,
+        openCropModal,
+        closeCropModal,
         canUndo,
         canRedo,
         undo,
@@ -537,6 +627,7 @@ export const EditorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         splitClipAtPlayhead,
         trimClip,
         duplicateClip,
+        extractAudioFromClip,
         updateClipTransform,
         updateClipColor,
         updateClipFilter,

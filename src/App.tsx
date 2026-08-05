@@ -5,10 +5,13 @@ import { Navbar } from './components/editor/Navbar';
 import { PreviewCanvas } from './components/editor/PreviewCanvas';
 import { Timeline } from './components/editor/Timeline';
 import { ToolPanels } from './components/editor/ToolPanels';
+import { HomeScreen } from './components/home/HomeScreen';
+import { DrawerMenu } from './components/editor/DrawerMenu';
 import { AuthModal } from './components/modals/AuthModal';
 import { ProjectsModal } from './components/modals/ProjectsModal';
 import { ExportModal } from './components/modals/ExportModal';
 import { SettingsModal } from './components/modals/SettingsModal';
+import { CropModal } from './components/modals/CropModal';
 import { CheckCircle2 } from 'lucide-react';
 
 const EditorLayout: React.FC = () => {
@@ -23,6 +26,8 @@ const EditorLayout: React.FC = () => {
     duplicateClip,
     toastMessage,
     setSelectedClipId,
+    viewMode,
+    theme,
   } = useEditor();
 
   const [isAuthOpen, setIsAuthOpen] = useState(false);
@@ -62,8 +67,46 @@ const EditorLayout: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isPlaying, selectedClipId, setIsPlaying, splitClipAtPlayhead, removeClip, duplicateClip, undo, redo, setSelectedClipId]);
 
+  if (viewMode === 'home') {
+    return (
+      <div className={`min-h-screen w-screen overflow-x-hidden ${theme === 'light' ? 'bg-slate-50 text-slate-900' : 'bg-neutral-950 text-white'}`}>
+        <HomeScreen onOpenAuth={() => setIsAuthOpen(true)} />
+
+        <DrawerMenu
+          onOpenAuth={() => setIsAuthOpen(true)}
+          onOpenProjects={() => setIsProjectsOpen(true)}
+          onOpenExport={() => setIsExportOpen(true)}
+          onOpenSettings={() => setIsSettingsOpen(true)}
+        />
+
+        <AuthModal
+          isOpen={isAuthOpen}
+          onClose={() => setIsAuthOpen(false)}
+          onOpenSettings={() => {
+            setIsAuthOpen(false);
+            setIsSettingsOpen(true);
+          }}
+        />
+        <ProjectsModal
+          isOpen={isProjectsOpen}
+          onClose={() => setIsProjectsOpen(false)}
+        />
+        <ExportModal
+          isOpen={isExportOpen}
+          onClose={() => setIsExportOpen(false)}
+        />
+        <SettingsModal
+          isOpen={isSettingsOpen}
+          onClose={() => setIsSettingsOpen(false)}
+        />
+      </div>
+    );
+  }
+
   return (
-    <div className="h-screen w-screen flex flex-col bg-neutral-950 text-white overflow-hidden select-none font-['Plus_Jakarta_Sans']">
+    <div className={`h-screen w-screen flex flex-col overflow-hidden select-none font-['Plus_Jakarta_Sans'] ${
+      theme === 'light' ? 'bg-slate-100 text-slate-900' : 'bg-neutral-950 text-white'
+    }`}>
       {/* Top Navbar */}
       <Navbar
         onOpenAuth={() => setIsAuthOpen(true)}
@@ -83,6 +126,17 @@ const EditorLayout: React.FC = () => {
 
       {/* Bottom Timeline Drawer */}
       <Timeline />
+
+      {/* Slide-out Hamburger Drawer Menu */}
+      <DrawerMenu
+        onOpenAuth={() => setIsAuthOpen(true)}
+        onOpenProjects={() => setIsProjectsOpen(true)}
+        onOpenExport={() => setIsExportOpen(true)}
+        onOpenSettings={() => setIsSettingsOpen(true)}
+      />
+
+      {/* Crop Modal */}
+      <CropModal />
 
       {/* Toast Notification Bar */}
       {toastMessage && (

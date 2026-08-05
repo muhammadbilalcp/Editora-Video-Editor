@@ -84,8 +84,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onOpenSet
 
         <div className="flex flex-col items-center mb-6">
           <EditoraLogo size="lg" variant="dark" />
-          <p className="text-xs text-neutral-400 mt-2">
-            {user ? 'Account & Custom API Configuration' : 'Sign in to sync video projects in cloud'}
+          <p className="text-xs text-neutral-400 mt-2 text-center">
+            {user ? 'Account & Custom API Configuration' : 'Sign up or sign in to start creating and editing videos'}
           </p>
         </div>
 

@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { useEditor } from '../../context/EditorContext';
 import { formatTimecode } from '../../utils/time';
+import { CapCutToolbar } from './CapCutToolbar';
 import {
   Scissors,
   Copy,
@@ -41,6 +42,7 @@ export const Timeline: React.FC = () => {
     setZoomLevel,
     setActivePanel,
     trimClip,
+    theme,
   } = useEditor();
 
   const timelineRef = useRef<HTMLDivElement | null>(null);
@@ -105,84 +107,24 @@ export const Timeline: React.FC = () => {
     }));
   };
 
-  const selectedClip = project.tracks
-    .flatMap((t) => t.clips)
-    .find((c) => c.id === selectedClipId);
-
   return (
     <div
       onMouseMove={handleScrubMove}
       onMouseUp={handleScrubEnd}
       onMouseLeave={handleScrubEnd}
-      className="h-64 md:h-72 bg-neutral-900 border-t border-neutral-800 flex flex-col select-none shrink-0 z-20"
+      className={`h-72 md:h-80 border-t flex flex-col select-none shrink-0 z-20 ${
+        theme === 'light' ? 'bg-slate-100 border-slate-300 text-slate-900' : 'bg-neutral-900 border-neutral-800 text-white'
+      }`}
     >
-      {/* Quick Action Toolbar Above Timeline */}
-      <div className="h-11 bg-neutral-900/90 border-b border-neutral-800/80 px-3 flex items-center justify-between gap-2 overflow-x-auto text-xs shrink-0">
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => selectedClipId && splitClipAtPlayhead(selectedClipId)}
-            disabled={!selectedClipId}
-            className="flex items-center gap-1.5 px-2.5 py-1 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 rounded-md border border-neutral-700/60 disabled:opacity-40 transition"
-            title="Split selected clip at playhead"
-          >
-            <Scissors className="w-3.5 h-3.5 text-sky-400" />
-            <span>Split</span>
-          </button>
+      {/* CapCut Horizontal Action Toolbar */}
+      <CapCutToolbar />
 
-          <button
-            onClick={() => selectedClipId && duplicateClip(selectedClipId)}
-            disabled={!selectedClipId}
-            className="flex items-center gap-1.5 px-2.5 py-1 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 rounded-md border border-neutral-700/60 disabled:opacity-40 transition"
-            title="Duplicate selected clip"
-          >
-            <Copy className="w-3.5 h-3.5 text-amber-400" />
-            <span>Duplicate</span>
-          </button>
-
-          <button
-            onClick={() => selectedClipId && removeClip(selectedClipId)}
-            disabled={!selectedClipId}
-            className="flex items-center gap-1.5 px-2.5 py-1 bg-neutral-800 hover:bg-rose-900/40 text-neutral-200 hover:text-rose-300 rounded-md border border-neutral-700/60 disabled:opacity-40 transition"
-            title="Delete selected clip"
-          >
-            <Trash2 className="w-3.5 h-3.5 text-rose-400" />
-            <span>Delete</span>
-          </button>
-
-          <div className="w-px h-4 bg-neutral-800 mx-1" />
-
-          {/* Inspector Panel Quick Open */}
-          <button
-            onClick={() => setActivePanel('inspector')}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs transition ${
-              selectedClipId
-                ? 'bg-sky-500/20 border-sky-500/40 text-sky-300'
-                : 'bg-neutral-800 border-neutral-700/60 text-neutral-400 hover:text-white'
-            }`}
-          >
-            <Sliders className="w-3.5 h-3.5" />
-            <span>Filters & Crop</span>
-          </button>
-
-          <button
-            onClick={() => selectedClipId && freezeFrame(selectedClipId)}
-            disabled={!selectedClipId}
-            className="flex items-center gap-1 px-2 py-1 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 rounded border border-neutral-700/60 disabled:opacity-40 transition"
-            title="Freeze Frame"
-          >
-            <Snowflake className="w-3.5 h-3.5 text-cyan-400" />
-            <span className="hidden md:inline">Freeze</span>
-          </button>
-
-          <button
-            onClick={() => selectedClipId && toggleReverseClip(selectedClipId)}
-            disabled={!selectedClipId}
-            className="flex items-center gap-1 px-2 py-1 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 rounded border border-neutral-700/60 disabled:opacity-40 transition"
-            title="Reverse Playback"
-          >
-            <RotateCcw className="w-3.5 h-3.5 text-purple-400" />
-            <span className="hidden md:inline">Reverse</span>
-          </button>
+      {/* Timeline Controls & Zoom Bar */}
+      <div className={`h-8 border-b px-3 flex items-center justify-between text-xs shrink-0 ${
+        theme === 'light' ? 'bg-slate-200 border-slate-300 text-slate-700' : 'bg-neutral-900/90 border-neutral-800/80 text-neutral-400'
+      }`}>
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-sky-400">Timeline Tracks</span>
         </div>
 
         {/* Zoom Scale Controls */}

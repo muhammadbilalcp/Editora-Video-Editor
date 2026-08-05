@@ -88,7 +88,7 @@ export const ElevenLabsVoicePanel: React.FC = () => {
 
   return (
     <div className="p-4 flex flex-col h-full overflow-y-auto select-none">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-3">
         <h2 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-sky-400" />
           ElevenLabs AI Voice
@@ -113,6 +113,26 @@ export const ElevenLabsVoicePanel: React.FC = () => {
             Voice Clone
           </button>
         </div>
+      </div>
+
+      {/* PRO Upgrade Plan Banner */}
+      <div className="mb-4 p-3 rounded-xl bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-purple-500/10 border border-amber-500/30 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <div className="p-1.5 bg-amber-500/20 text-amber-400 rounded-lg font-extrabold text-[10px] tracking-wider uppercase shrink-0">
+            PRO
+          </div>
+          <div>
+            <div className="text-xs font-bold text-amber-300">Unlimited Studio Voice Generation</div>
+            <div className="text-[10px] text-neutral-400">Razorpay Payment Integration Active Soon</div>
+          </div>
+        </div>
+
+        <button
+          onClick={() => alert('Razorpay upgrade plan gateway will be activated shortly!')}
+          className="bg-amber-500 hover:bg-amber-400 text-neutral-950 font-bold text-[11px] px-3 py-1.5 rounded-lg shadow-sm transition shrink-0"
+        >
+          Upgrade Plan
+        </button>
       </div>
 
       {mode === 'tts' ? (

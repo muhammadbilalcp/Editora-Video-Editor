@@ -16,6 +16,12 @@ import {
   CloudUpload,
   Settings,
   Plus,
+  Menu,
+  Home,
+  Sun,
+  Moon,
+  Maximize2,
+  Minimize2,
 } from 'lucide-react';
 import { AspectRatio } from '../../types/editor';
 
@@ -42,11 +48,16 @@ export const Navbar: React.FC<NavbarProps> = ({
     setAspectRatio,
     isAutosaving,
     saveProjectNow,
+    setViewMode,
+    theme,
+    toggleTheme,
+    setIsDrawerMenuOpen,
   } = useEditor();
   const { user } = useAuth();
 
   const [isEditingName, setIsEditingName] = useState(false);
   const [projName, setProjName] = useState(project.name);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const handleNameBlur = () => {
     setIsEditingName(false);
@@ -54,6 +65,16 @@ export const Navbar: React.FC<NavbarProps> = ({
       setProject((prev) => ({ ...prev, name: projName.trim() }));
     } else {
       setProjName(project.name);
+    }
+  };
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen().catch(() => {});
+      setIsFullscreen(false);
     }
   };
 
@@ -65,12 +86,32 @@ export const Navbar: React.FC<NavbarProps> = ({
   ];
 
   return (
-    <header className="h-14 bg-neutral-900 border-b border-neutral-800 flex items-center justify-between px-3 md:px-5 select-none shrink-0 z-30">
-      {/* Left: Brand Logo & Project Title */}
-      <div className="flex items-center gap-3 md:gap-5">
-        <EditoraLogo size="sm" variant="dark" className="cursor-pointer" />
+    <header className={`h-14 border-b flex items-center justify-between px-3 md:px-5 select-none shrink-0 z-30 ${
+      theme === 'light' ? 'bg-white border-slate-200 text-slate-900' : 'bg-neutral-900 border-neutral-800 text-white'
+    }`}>
+      {/* Left: 3-Lines Menu, Home Button, Brand Logo & Project Title */}
+      <div className="flex items-center gap-2 md:gap-3">
+        {/* 3-Lines Menu Button */}
+        <button
+          onClick={() => setIsDrawerMenuOpen(true)}
+          className="p-2 rounded-lg hover:bg-neutral-800/80 transition text-neutral-300 hover:text-white"
+          title="Open Menu (3 lines)"
+        >
+          <Menu className="w-5 h-5 text-sky-400" />
+        </button>
 
-        <div className="hidden sm:flex items-center gap-2 border-l border-neutral-800 pl-4">
+        {/* Home Screen Button */}
+        <button
+          onClick={() => setViewMode('home')}
+          className="p-2 rounded-lg hover:bg-neutral-800/80 transition text-neutral-300 hover:text-white"
+          title="Return to Home Dashboard"
+        >
+          <Home className="w-4 h-4 text-amber-400" />
+        </button>
+
+        <EditoraLogo size="sm" variant={theme === 'light' ? 'light' : 'dark'} className="cursor-pointer hidden sm:flex" />
+
+        <div className="flex items-center gap-2 border-l border-neutral-800 pl-3">
           {isEditingName ? (
             <input
               type="text"
@@ -79,12 +120,12 @@ export const Navbar: React.FC<NavbarProps> = ({
               onBlur={handleNameBlur}
               onKeyDown={(e) => e.key === 'Enter' && handleNameBlur()}
               autoFocus
-              className="bg-neutral-800 text-white font-medium text-sm px-2 py-1 rounded border border-sky-500 outline-none w-40"
+              className="bg-neutral-800 text-white font-medium text-xs px-2 py-1 rounded border border-sky-500 outline-none w-32 md:w-40"
             />
           ) : (
             <h1
               onClick={() => setIsEditingName(true)}
-              className="text-white font-semibold text-sm hover:text-sky-400 transition cursor-pointer truncate max-w-[160px] md:max-w-[220px]"
+              className="font-semibold text-xs md:text-sm hover:text-sky-400 transition cursor-pointer truncate max-w-[120px] md:max-w-[200px]"
               title="Click to rename"
             >
               {project.name}
@@ -110,7 +151,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       <div className="flex items-center gap-1 md:gap-2">
         {/* Aspect Ratio Selector */}
         <div className="relative group">
-          <button className="flex items-center gap-1.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs font-medium px-2.5 py-1.5 rounded-lg border border-neutral-700/60 transition">
+          <button className="flex items-center gap-1.5 bg-neutral-800/80 hover:bg-neutral-700 text-neutral-200 text-xs font-medium px-2.5 py-1.5 rounded-lg border border-neutral-700/60 transition">
             <Smartphone className="w-3.5 h-3.5 text-sky-400" />
             <span className="hidden md:inline">{project.aspectRatio}</span>
           </button>
@@ -154,23 +195,35 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
         </div>
 
-        {/* Saved Projects Modal Toggle */}
+        {/* Eye Comfort Theme Switcher */}
         <button
-          onClick={onOpenProjects}
-          className="flex items-center gap-1.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs font-medium px-2.5 py-1.5 rounded-lg border border-neutral-700/60 transition"
-          title="Open Saved Projects"
+          onClick={toggleTheme}
+          className={`p-1.5 rounded-lg border transition ${
+            theme === 'light'
+              ? 'bg-amber-100 border-amber-300 text-amber-900'
+              : 'bg-neutral-800 border-neutral-700 text-sky-400'
+          }`}
+          title="Eye Comfort Theme Switcher (Sunlight / Night)"
         >
-          <FolderOpen className="w-3.5 h-3.5 text-amber-400" />
-          <span className="hidden md:inline">Projects</span>
+          {theme === 'light' ? <Sun className="w-4 h-4 fill-current" /> : <Moon className="w-4 h-4 fill-current" />}
+        </button>
+
+        {/* Fullscreen Button */}
+        <button
+          onClick={toggleFullscreen}
+          className="p-1.5 text-neutral-300 hover:text-white transition rounded-lg bg-neutral-800/80 border border-neutral-700/60"
+          title="Fullscreen Mode"
+        >
+          {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
         </button>
       </div>
 
       {/* Right: Settings, Profile & Export Button */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5 md:gap-2">
         <button
           onClick={onOpenSettings}
-          className="p-2 text-neutral-400 hover:text-white transition rounded-lg hover:bg-neutral-800"
-          title="Settings & API Keys"
+          className="p-2 text-neutral-400 hover:text-white transition rounded-lg hover:bg-neutral-800 hidden sm:block"
+          title="Settings & Shortcuts"
         >
           <Settings className="w-4 h-4" />
         </button>
@@ -185,7 +238,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           ) : (
             <UserIcon className="w-4 h-4 text-sky-400" />
           )}
-          <span className="hidden lg:inline text-xs font-medium text-neutral-200 truncate max-w-[100px]">
+          <span className="hidden lg:inline text-xs font-medium text-neutral-200 truncate max-w-[90px]">
             {user ? user.displayName || user.email?.split('@')[0] : 'Sign In'}
           </span>
         </button>
@@ -193,10 +246,10 @@ export const Navbar: React.FC<NavbarProps> = ({
         {/* Primary Export CTA */}
         <button
           onClick={onOpenExport}
-          className="flex items-center gap-1.5 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white text-xs font-bold px-3.5 py-1.5 rounded-lg shadow-lg shadow-sky-500/20 transition transform active:scale-95"
+          className="flex items-center gap-1.5 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-lg shadow-sky-500/20 transition transform active:scale-95 shrink-0"
         >
           <Download className="w-3.5 h-3.5" />
-          <span>Export MP4</span>
+          <span className="hidden sm:inline">Export</span>
         </button>
       </div>
     </header>
