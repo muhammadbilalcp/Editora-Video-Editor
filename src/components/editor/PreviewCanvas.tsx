@@ -45,6 +45,7 @@ export const PreviewCanvas: React.FC = () => {
   const [isMuted, setIsMuted] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [isMobileFullscreen, setIsMobileFullscreen] = useState(false);
 
   const { width: targetWidth, height: targetHeight } = getCanvasDimensions(project.aspectRatio);
 
@@ -239,33 +240,46 @@ export const PreviewCanvas: React.FC = () => {
   };
 
   const toggleFullscreen = () => {
-    if (containerRef.current) {
-      if (document.fullscreenElement) {
-        document.exitFullscreen();
-      } else {
-        containerRef.current.requestFullscreen();
-      }
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => {});
+      setIsMobileFullscreen(false);
+    } else if (containerRef.current && containerRef.current.requestFullscreen) {
+      containerRef.current.requestFullscreen().then(() => {
+        setIsMobileFullscreen(true);
+      }).catch(() => {
+        // Fallback for iOS Safari / Mobile web where requestFullscreen is blocked
+        setIsMobileFullscreen((prev) => !prev);
+      });
+    } else {
+      setIsMobileFullscreen((prev) => !prev);
     }
   };
 
   return (
-    <div className="flex-1 bg-neutral-950 flex flex-col items-center justify-center p-2 md:p-4 relative overflow-hidden select-none">
+    <div className={`flex-1 bg-neutral-950 flex flex-col items-center justify-center p-2 md:p-4 relative overflow-hidden select-none ${
+      isMobileFullscreen ? 'fixed inset-0 z-50 p-0 m-0 bg-black flex items-center justify-center' : ''
+    }`}>
       {/* Aspect Ratio Canvas Frame */}
       <div
         ref={containerRef}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
-        className="relative bg-neutral-900 border border-neutral-800 rounded-xl shadow-2xl flex items-center justify-center overflow-hidden max-h-[55vh] md:max-h-[60vh] max-w-full aspect-[9/16] transition-all"
+        className={`relative bg-neutral-900 border border-neutral-800 shadow-2xl flex items-center justify-center overflow-hidden transition-all ${
+          isMobileFullscreen
+            ? 'w-full h-full max-h-screen max-w-screen rounded-none border-none'
+            : 'rounded-xl max-h-[55vh] md:max-h-[60vh] max-w-full aspect-[9/16]'
+        }`}
         style={{
-          aspectRatio:
-            project.aspectRatio === '9:16'
-              ? '9/16'
-              : project.aspectRatio === '16:9'
-              ? '16/9'
-              : project.aspectRatio === '1:1'
-              ? '1/1'
-              : '4/5',
+          aspectRatio: isMobileFullscreen
+            ? undefined
+            : project.aspectRatio === '9:16'
+            ? '9/16'
+            : project.aspectRatio === '16:9'
+            ? '16/9'
+            : project.aspectRatio === '1:1'
+            ? '1/1'
+            : '4/5',
         }}
       >
         <canvas
