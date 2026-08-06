@@ -74,14 +74,27 @@ export const PexelsMediaPanel: React.FC = () => {
 
       if (isVideo) {
         const video = document.createElement('video');
-        video.preload = 'auto';
+        video.preload = 'metadata';
         video.muted = true;
+        video.playsInline = true;
+        video.crossOrigin = 'anonymous';
+        
+        // FIX: Set src BEFORE adding listeners
         video.src = url;
-        video.onloadedmetadata = () => {
-          const duration = Math.max(1, Math.round(video.duration || 8));
+
+        // FIX: Use a timeout to ensure metadata is loaded
+        let metadataLoaded = false;
+        let duration = 8;
+
+        const onMetadata = () => {
+          metadataLoaded = true;
+          duration = Math.max(1, Math.round(video.duration || 8));
           video.currentTime = Math.min(1, duration / 2);
         };
-        video.onseeked = () => {
+
+        const onSeeked = () => {
+          if (!metadataLoaded) return;
+          
           try {
             const canvas = document.createElement('canvas');
             canvas.width = 160;
@@ -96,21 +109,56 @@ export const PexelsMediaPanel: React.FC = () => {
                 type: 'video',
                 url,
                 thumbnail,
-                duration: Math.max(1, Math.round(video.duration || 8)),
+                duration,
               };
               saveAndAddUpload(newItem);
+              cleanup();
               return;
             }
-          } catch (e) {}
+          } catch (e) {
+            console.error('Thumbnail generation failed:', e);
+          }
+          
+          // Fallback: no thumbnail
           const newItem: LocalUploadedMedia = {
             id: 'upload_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
             name: file.name,
             type: 'video',
             url,
-            duration: Math.max(1, Math.round(video.duration || 8)),
+            duration,
           };
           saveAndAddUpload(newItem);
+          cleanup();
         };
+
+        const cleanup = () => {
+          video.removeEventListener('loadedmetadata', onMetadata);
+          video.removeEventListener('seeked', onSeeked);
+          video.src = '';
+        };
+
+        video.addEventListener('loadedmetadata', onMetadata);
+        video.addEventListener('seeked', onSeeked);
+        
+        // FIX: Force load for blob URLs
+        video.load();
+
+        // Timeout fallback (5 seconds) - in case video never loads properly
+        setTimeout(() => {
+          if (!metadataLoaded) {
+            console.warn('Video metadata timeout for:', file.name);
+            const newItem: LocalUploadedMedia = {
+              id: 'upload_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+              name: file.name,
+              type: 'video',
+              url,
+              duration: 8,
+            };
+            saveAndAddUpload(newItem);
+            cleanup();
+          }
+        }, 5000);
+
       } else if (isAudio) {
         const audio = document.createElement('audio');
         audio.src = url;
@@ -125,15 +173,23 @@ export const PexelsMediaPanel: React.FC = () => {
           };
           saveAndAddUpload(newItem);
         };
+        audio.load();
       } else if (isImage) {
-        const newItem: LocalUploadedMedia = {
-          id: 'upload_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
-          name: file.name,
-          type: 'image',
-          url,
-          duration: 5,
+        const img = new Image();
+        img.onload = () => {
+          const newItem: LocalUploadedMedia = {
+            id: 'upload_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+            name: file.name,
+            type: 'image',
+            url,
+            duration: 5,
+          };
+          saveAndAddUpload(newItem);
         };
-        saveAndAddUpload(newItem);
+        img.onerror = () => {
+          showToast(`Failed to load image: ${file.name}`);
+        };
+        img.src = url;
       }
     });
 
@@ -143,6 +199,7 @@ export const PexelsMediaPanel: React.FC = () => {
   const saveAndAddUpload = (newItem: LocalUploadedMedia) => {
     setLocalUploads((prev) => {
       const updated = [newItem, ...prev];
+      localStorage.setItem('editora_uploaded_media', JSON.stringify(updated));
       return updated;
     });
 
@@ -154,12 +211,16 @@ export const PexelsMediaPanel: React.FC = () => {
       duration: newItem.duration,
     });
 
-    showToast(`Uploaded & added ${newItem.name}`);
+    showToast(`✅ Uploaded & added ${newItem.name}`);
   };
 
   const handleRemoveUpload = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    setLocalUploads((prev) => prev.filter((item) => item.id !== id));
+    setLocalUploads((prev) => {
+      const updated = prev.filter((item) => item.id !== id);
+      localStorage.setItem('editora_uploaded_media', JSON.stringify(updated));
+      return updated;
+    });
   };
 
   const handleImportPexelsMedia = (item: PexelsMediaItem) => {
@@ -236,9 +297,9 @@ export const PexelsMediaPanel: React.FC = () => {
           {/* Upload Drop Zone Button */}
           <div
             onClick={() => fileInputRef.current?.click()}
-            className="border-2 border-dashed border-neutral-700 hover:border-white rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer bg-neutral-950/60 hover:bg-neutral-900 transition group shadow-inner"
+            className="border-2 border-dashed border-neutral-700 hover:border-white rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer bg-neutral-950/60 hover:bg-neutral-950 transition"
           >
-            <div className="w-12 h-12 rounded-full bg-white/10 group-hover:bg-white text-white group-hover:text-black flex items-center justify-center mb-2 transition transform group-hover:scale-110">
+            <div className="w-12 h-12 rounded-full bg-white/10 hover:bg-white text-white hover:text-black flex items-center justify-center mb-2 transition transform hover:scale-110">
               <Upload className="w-5 h-5 stroke-[2.5]" />
             </div>
             <h3 className="text-xs font-bold text-white mb-0.5">Click to Upload Media</h3>
@@ -266,16 +327,22 @@ export const PexelsMediaPanel: React.FC = () => {
                         type: up.type,
                         src: up.url,
                         name: up.name,
-                        thumbnail: up.type === 'image' ? up.url : undefined,
+                        thumbnail: up.type === 'image' ? up.url : up.thumbnail,
                         duration: up.duration,
                       })
                     }
-                    className="group relative aspect-video bg-neutral-950 border border-neutral-800 rounded-lg overflow-hidden cursor-pointer hover:border-white transition shadow flex flex-col items-center justify-center p-2"
+                    className="group relative aspect-video bg-neutral-950 border border-neutral-800 rounded-lg overflow-hidden cursor-pointer hover:border-white transition shadow flex flex-col items-center justify-center"
                   >
                     {up.type === 'image' ? (
                       <img src={up.url} alt={up.name} className="w-full h-full object-cover" />
                     ) : up.type === 'video' ? (
-                      <video src={up.url} className="w-full h-full object-cover pointer-events-none" />
+                      <>
+                        {up.thumbnail ? (
+                          <img src={up.thumbnail} alt={up.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <Film className="w-8 h-8 text-neutral-600" />
+                        )}
+                      </>
                     ) : (
                       <div className="flex flex-col items-center justify-center text-amber-400">
                         <Music className="w-6 h-6 mb-1" />
@@ -357,4 +424,3 @@ export const PexelsMediaPanel: React.FC = () => {
     </div>
   );
 };
-
