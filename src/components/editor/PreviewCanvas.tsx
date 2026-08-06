@@ -41,15 +41,21 @@ export const PreviewCanvas: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mediaCacheRef = useRef<Map<string, HTMLVideoElement | HTMLImageElement>>(new Map());
+  const isMutedRef = useRef(false);
 
   const [isMuted, setIsMuted] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [isMobileFullscreen, setIsMobileFullscreen] = useState(false);
 
+  // Keep muted state in ref to avoid dependency issues
+  useEffect(() => {
+    isMutedRef.current = isMuted;
+  }, [isMuted]);
+
   const { width: targetWidth, height: targetHeight } = getCanvasDimensions(project.aspectRatio);
 
-  // Preload video, audio & image elements into DOM cache
+  // Preload video, audio & image elements into DOM cache with proper initialization
   useEffect(() => {
     project.tracks.forEach((track) => {
       track.clips.forEach((clip) => {
@@ -62,7 +68,13 @@ export const PreviewCanvas: React.FC = () => {
             vid.src = clip.src;
             vid.muted = false;
             vid.playsInline = true;
-            vid.preload = 'auto';
+            vid.preload = 'metadata';
+            
+            // Force loading for blob URLs
+            vid.addEventListener('loadedmetadata', () => {
+              vid.load();
+            }, { once: true });
+            
             mediaCacheRef.current.set(clip.id, vid);
           } else if (clip.type === 'audio') {
             const aud = document.createElement('audio');
@@ -71,7 +83,8 @@ export const PreviewCanvas: React.FC = () => {
             }
             aud.src = clip.src;
             aud.muted = false;
-            aud.preload = 'auto';
+            aud.preload = 'metadata';
+            aud.load();
             mediaCacheRef.current.set(clip.id, aud);
           } else if (clip.type === 'image' || clip.type === 'giphy') {
             const img = new Image();
@@ -96,7 +109,7 @@ export const PreviewCanvas: React.FC = () => {
 
   const lastReactUpdateRef = useRef<number>(0);
 
-  // Main Render Frame Function reading from live time Ref
+  // Main Render Frame Function reading from live time Ref - FIXED DEPENDENCIES
   const renderFrame = useCallback((timeToRender?: number) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -126,7 +139,7 @@ export const PreviewCanvas: React.FC = () => {
 
         const clipElapsed = time - clip.startTime;
         const targetTime = clip.sourceStart + clipElapsed * clip.speed;
-        const shouldMute = track.muted || clip.audioSettings?.muted || isMuted;
+        const shouldMute = track.muted || clip.audioSettings?.muted || isMutedRef.current;
         const targetVol = shouldMute ? 0 : Math.min(1, Math.max(0, clip.audioSettings?.volume ?? 1));
 
         // Handle Audio Track Clips
@@ -146,7 +159,7 @@ export const PreviewCanvas: React.FC = () => {
               if (aud.paused && !shouldMute) {
                 aud.currentTime = targetTime;
                 aud.play().catch(() => {});
-              } else if (Math.abs(aud.currentTime - targetTime) > 0.4) {
+              } else if (Math.abs(aud.currentTime - targetTime) > 0.15) {
                 aud.currentTime = targetTime;
               }
             }
@@ -180,7 +193,8 @@ export const PreviewCanvas: React.FC = () => {
 
         if (clip.type === 'video') {
           const vid = mediaCacheRef.current.get(clip.id) as HTMLVideoElement;
-          if (vid && vid.readyState >= 2) {
+          // FIX: Changed from readyState >= 2 to >= 3 for proper video rendering
+          if (vid && vid.readyState >= 3) {
             vid.muted = shouldMute;
             vid.volume = targetVol;
             vid.playbackRate = clip.speed || 1;
@@ -194,7 +208,7 @@ export const PreviewCanvas: React.FC = () => {
               if (vid.paused) {
                 vid.currentTime = targetTime;
                 vid.play().catch(() => {});
-              } else if (Math.abs(vid.currentTime - targetTime) > 0.35) {
+              } else if (Math.abs(vid.currentTime - targetTime) > 0.15) {
                 vid.currentTime = targetTime;
               }
             }
@@ -211,7 +225,8 @@ export const PreviewCanvas: React.FC = () => {
           }
         } else if (clip.type === 'image' || clip.type === 'giphy') {
           const img = mediaCacheRef.current.get(clip.id) as HTMLImageElement;
-          if (img && img.complete) {
+          // FIX: Added naturalWidth check to verify image loaded properly
+          if (img && img.complete && img.naturalWidth > 0) {
             if (crop && (crop.width < 100 || crop.height < 100 || crop.x > 0 || crop.y > 0)) {
               const sx = (crop.x / 100) * img.naturalWidth;
               const sy = (crop.y / 100) * img.naturalHeight;
@@ -244,7 +259,7 @@ export const PreviewCanvas: React.FC = () => {
         }
       });
     });
-  }, [project, isPlaying, isMuted]);
+  }, [project, isPlaying]); // FIX: Removed isMuted from deps, using ref instead
 
   // Playback Animation Loop
   const requestRef = useRef<number | null>(null);
