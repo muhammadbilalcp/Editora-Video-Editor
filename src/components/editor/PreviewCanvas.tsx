@@ -49,22 +49,35 @@ export const PreviewCanvas: React.FC = () => {
 
   const { width: targetWidth, height: targetHeight } = getCanvasDimensions(project.aspectRatio);
 
-  // Preload video & image elements into DOM cache
+  // Preload video, audio & image elements into DOM cache
   useEffect(() => {
     project.tracks.forEach((track) => {
       track.clips.forEach((clip) => {
         if (!mediaCacheRef.current.has(clip.id)) {
           if (clip.type === 'video') {
             const vid = document.createElement('video');
-            vid.crossOrigin = 'anonymous';
+            if (!clip.src.startsWith('blob:') && !clip.src.startsWith('data:')) {
+              vid.crossOrigin = 'anonymous';
+            }
             vid.src = clip.src;
-            vid.muted = true;
+            vid.muted = false;
             vid.playsInline = true;
             vid.preload = 'auto';
             mediaCacheRef.current.set(clip.id, vid);
+          } else if (clip.type === 'audio') {
+            const aud = document.createElement('audio');
+            if (!clip.src.startsWith('blob:') && !clip.src.startsWith('data:')) {
+              aud.crossOrigin = 'anonymous';
+            }
+            aud.src = clip.src;
+            aud.muted = false;
+            aud.preload = 'auto';
+            mediaCacheRef.current.set(clip.id, aud);
           } else if (clip.type === 'image' || clip.type === 'giphy') {
             const img = new Image();
-            img.crossOrigin = 'anonymous';
+            if (!clip.src.startsWith('blob:') && !clip.src.startsWith('data:')) {
+              img.crossOrigin = 'anonymous';
+            }
             img.src = clip.src;
             mediaCacheRef.current.set(clip.id, img);
           }
@@ -73,12 +86,24 @@ export const PreviewCanvas: React.FC = () => {
     });
   }, [project]);
 
-  // Main Render Frame Function
-  const renderFrame = useCallback(() => {
+  // Keep live refs for animation loop to avoid re-binding requestAnimationFrame
+  const currentTimeRef = useRef(currentTime);
+  useEffect(() => {
+    if (!isPlaying) {
+      currentTimeRef.current = currentTime;
+    }
+  }, [currentTime, isPlaying]);
+
+  const lastReactUpdateRef = useRef<number>(0);
+
+  // Main Render Frame Function reading from live time Ref
+  const renderFrame = useCallback((timeToRender?: number) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { alpha: false });
     if (!ctx) return;
+
+    const time = timeToRender !== undefined ? timeToRender : currentTimeRef.current;
 
     // Clear Canvas
     ctx.fillStyle = '#09090B';
@@ -87,110 +112,139 @@ export const PreviewCanvas: React.FC = () => {
     // Render active tracks bottom to top
     project.tracks.forEach((track) => {
       track.clips.forEach((clip) => {
-        const isActive = !track.hidden && currentTime >= clip.startTime && currentTime <= clip.startTime + clip.duration;
+        const isActive = !track.hidden && time >= clip.startTime && time <= clip.startTime + clip.duration;
 
         if (!isActive) {
-          if (clip.type === 'video') {
-            const vid = mediaCacheRef.current.get(clip.id) as HTMLVideoElement;
-            if (vid && !vid.paused) {
-              vid.pause();
+          if (clip.type === 'video' || clip.type === 'audio') {
+            const media = mediaCacheRef.current.get(clip.id) as HTMLMediaElement;
+            if (media && !media.paused) {
+              media.pause();
             }
           }
           return;
         }
 
-        const clipElapsed = currentTime - clip.startTime;
+        const clipElapsed = time - clip.startTime;
+        const targetTime = clip.sourceStart + clipElapsed * clip.speed;
+        const shouldMute = track.muted || clip.audioSettings?.muted || isMuted;
+        const targetVol = shouldMute ? 0 : Math.min(1, Math.max(0, clip.audioSettings?.volume ?? 1));
+
+        // Handle Audio Track Clips
+        if (clip.type === 'audio') {
+          const aud = mediaCacheRef.current.get(clip.id) as HTMLAudioElement;
+          if (aud) {
+            aud.muted = shouldMute;
+            aud.volume = targetVol;
+            aud.playbackRate = clip.speed || 1;
+
+            if (!isPlaying) {
+              if (!aud.paused) aud.pause();
+              if (Math.abs(aud.currentTime - targetTime) > 0.05) {
+                aud.currentTime = targetTime;
+              }
+            } else {
+              if (aud.paused && !shouldMute) {
+                aud.currentTime = targetTime;
+                aud.play().catch(() => {});
+              } else if (Math.abs(aud.currentTime - targetTime) > 0.4) {
+                aud.currentTime = targetTime;
+              }
+            }
+          }
+          return;
+        }
 
         ctx.save();
 
-          // Transform Calculations (Position, Scale, Rotate, Flip)
-          const centerX = canvas.width / 2 + (clip.transform.x / 100) * canvas.width;
-          const centerY = canvas.height / 2 + (clip.transform.y / 100) * canvas.height;
+        // Transform Calculations (Position, Scale, Rotate, Flip)
+        const centerX = canvas.width / 2 + (clip.transform.x / 100) * canvas.width;
+        const centerY = canvas.height / 2 + (clip.transform.y / 100) * canvas.height;
 
-          ctx.translate(centerX, centerY);
-          ctx.rotate((clip.transform.rotation * Math.PI) / 180);
-          ctx.scale(
-            clip.transform.flipH ? -clip.transform.scale : clip.transform.scale,
-            clip.transform.flipV ? -clip.transform.scale : clip.transform.scale
+        ctx.translate(centerX, centerY);
+        ctx.rotate((clip.transform.rotation * Math.PI) / 180);
+        ctx.scale(
+          clip.transform.flipH ? -clip.transform.scale : clip.transform.scale,
+          clip.transform.flipV ? -clip.transform.scale : clip.transform.scale
+        );
+
+        // Color & Filter Adjustments & Opacity
+        ctx.globalAlpha = clip.colorAdjustments?.opacity !== undefined ? clip.colorAdjustments.opacity : 1;
+        const filterStr = buildCssFilterString(clip.colorAdjustments, clip.filter);
+        if (filterStr && filterStr !== 'none') {
+          ctx.filter = filterStr;
+        } else {
+          ctx.filter = 'none';
+        }
+
+        const crop = clip.transform.crop;
+
+        if (clip.type === 'video') {
+          const vid = mediaCacheRef.current.get(clip.id) as HTMLVideoElement;
+          if (vid && vid.readyState >= 2) {
+            vid.muted = shouldMute;
+            vid.volume = targetVol;
+            vid.playbackRate = clip.speed || 1;
+
+            if (!isPlaying) {
+              if (!vid.paused) vid.pause();
+              if (Math.abs(vid.currentTime - targetTime) > 0.05) {
+                vid.currentTime = targetTime;
+              }
+            } else {
+              if (vid.paused) {
+                vid.currentTime = targetTime;
+                vid.play().catch(() => {});
+              } else if (Math.abs(vid.currentTime - targetTime) > 0.35) {
+                vid.currentTime = targetTime;
+              }
+            }
+
+            if (crop && (crop.width < 100 || crop.height < 100 || crop.x > 0 || crop.y > 0)) {
+              const sx = (crop.x / 100) * vid.videoWidth;
+              const sy = (crop.y / 100) * vid.videoHeight;
+              const sw = (crop.width / 100) * vid.videoWidth;
+              const sh = (crop.height / 100) * vid.videoHeight;
+              ctx.drawImage(vid, sx, sy, sw, sh, -canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
+            } else {
+              ctx.drawImage(vid, -canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
+            }
+          }
+        } else if (clip.type === 'image' || clip.type === 'giphy') {
+          const img = mediaCacheRef.current.get(clip.id) as HTMLImageElement;
+          if (img && img.complete) {
+            if (crop && (crop.width < 100 || crop.height < 100 || crop.x > 0 || crop.y > 0)) {
+              const sx = (crop.x / 100) * img.naturalWidth;
+              const sy = (crop.y / 100) * img.naturalHeight;
+              const sw = (crop.width / 100) * img.naturalWidth;
+              const sh = (crop.height / 100) * img.naturalHeight;
+              ctx.drawImage(img, sx, sy, sw, sh, -canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
+            } else {
+              ctx.drawImage(img, -canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
+            }
+          }
+        }
+
+        // Apply Chroma Key
+        if (clip.chromaKey?.enabled) {
+          applyChromaKey(ctx, canvas.width, canvas.height, clip.chromaKey);
+        }
+
+        ctx.restore();
+
+        // Text Overlay
+        if (clip.type === 'text' && clip.textSettings) {
+          renderAnimatedTextOnCanvas(
+            ctx,
+            canvas.width,
+            canvas.height,
+            clip.textSettings,
+            clipElapsed,
+            clip.duration
           );
-
-          // Color & Filter Adjustments & Opacity
-          ctx.globalAlpha = clip.colorAdjustments?.opacity !== undefined ? clip.colorAdjustments.opacity : 1;
-          ctx.filter = buildCssFilterString(clip.colorAdjustments, clip.filter);
-
-          const crop = clip.transform.crop;
-
-          if (clip.type === 'video') {
-            const vid = mediaCacheRef.current.get(clip.id) as HTMLVideoElement;
-            if (vid && vid.readyState >= 2) {
-              const targetTime = clip.sourceStart + clipElapsed * clip.speed;
-
-              // Smooth real-time playback handling without seeking jitter
-              if (!isPlaying) {
-                if (Math.abs(vid.currentTime - targetTime) > 0.05) {
-                  vid.currentTime = targetTime;
-                }
-                if (!vid.paused) vid.pause();
-              } else {
-                vid.playbackRate = clip.speed || 1;
-                vid.volume = track.muted || clip.audioSettings?.muted ? 0 : (clip.audioSettings?.volume ?? 1);
-
-                // Only seek if playhead drifted dramatically (>0.4s) to avoid seeking stutter
-                if (Math.abs(vid.currentTime - targetTime) > 0.4) {
-                  vid.currentTime = targetTime;
-                }
-
-                if (vid.paused && !track.muted && !clip.audioSettings?.muted) {
-                  vid.play().catch(() => {});
-                }
-              }
-
-              if (crop && (crop.width < 100 || crop.height < 100 || crop.x > 0 || crop.y > 0)) {
-                const sx = (crop.x / 100) * vid.videoWidth;
-                const sy = (crop.y / 100) * vid.videoHeight;
-                const sw = (crop.width / 100) * vid.videoWidth;
-                const sh = (crop.height / 100) * vid.videoHeight;
-                ctx.drawImage(vid, sx, sy, sw, sh, -canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
-              } else {
-                ctx.drawImage(vid, -canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
-              }
-            }
-          } else if (clip.type === 'image' || clip.type === 'giphy') {
-            const img = mediaCacheRef.current.get(clip.id) as HTMLImageElement;
-            if (img && img.complete) {
-              if (crop && (crop.width < 100 || crop.height < 100 || crop.x > 0 || crop.y > 0)) {
-                const sx = (crop.x / 100) * img.naturalWidth;
-                const sy = (crop.y / 100) * img.naturalHeight;
-                const sw = (crop.width / 100) * img.naturalWidth;
-                const sh = (crop.height / 100) * img.naturalHeight;
-                ctx.drawImage(img, sx, sy, sw, sh, -canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
-              } else {
-                ctx.drawImage(img, -canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
-              }
-            }
-          }
-
-          // Apply Chroma Key
-          if (clip.chromaKey?.enabled) {
-            applyChromaKey(ctx, canvas.width, canvas.height, clip.chromaKey);
-          }
-
-          ctx.restore();
-
-          // Text Overlay
-          if (clip.type === 'text' && clip.textSettings) {
-            renderAnimatedTextOnCanvas(
-              ctx,
-              canvas.width,
-              canvas.height,
-              clip.textSettings,
-              clipElapsed,
-              clip.duration
-            );
-          }
+        }
       });
     });
-  }, [project, currentTime, isPlaying]);
+  }, [project, isPlaying, isMuted]);
 
   // Playback Animation Loop
   const requestRef = useRef<number | null>(null);
@@ -203,17 +257,24 @@ export const PreviewCanvas: React.FC = () => {
       lastTimeRef.current = timestamp;
 
       if (isPlaying) {
-        setCurrentTime((prev) => {
-          const next = prev + deltaTime;
-          if (next >= project.duration) {
-            setIsPlaying(false);
-            return 0;
-          }
-          return next;
-        });
+        currentTimeRef.current += deltaTime;
+
+        if (currentTimeRef.current >= project.duration) {
+          currentTimeRef.current = 0;
+          setCurrentTime(0);
+          setIsPlaying(false);
+          renderFrame(0);
+          return;
+        }
+
+        // Throttle React state updates to 15 FPS (~66ms) so timeline playhead moves smoothly without locking UI
+        if (timestamp - lastReactUpdateRef.current > 66) {
+          lastReactUpdateRef.current = timestamp;
+          setCurrentTime(currentTimeRef.current);
+        }
       }
 
-      renderFrame();
+      renderFrame(currentTimeRef.current);
 
       if (isPlaying) {
         requestRef.current = requestAnimationFrame(animate);
@@ -224,7 +285,8 @@ export const PreviewCanvas: React.FC = () => {
       lastTimeRef.current = performance.now();
       requestRef.current = requestAnimationFrame(animate);
     } else {
-      renderFrame();
+      renderFrame(currentTime);
+      setCurrentTime(currentTimeRef.current);
     }
 
     return () => {

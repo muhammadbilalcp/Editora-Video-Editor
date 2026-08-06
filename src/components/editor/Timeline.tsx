@@ -76,19 +76,25 @@ export const Timeline: React.FC = () => {
     if (timelineRef.current) {
       isProgrammaticScroll.current = true;
       timelineRef.current.scrollLeft = currentTime * zoomLevel;
-      const timer = setTimeout(() => {
+      const raf = requestAnimationFrame(() => {
         isProgrammaticScroll.current = false;
-      }, 50);
-      return () => clearTimeout(timer);
+      });
+      return () => cancelAnimationFrame(raf);
     }
   }, [currentTime, zoomLevel]);
 
   // Handle User Manual Horizontal Scroll/Drag on Timeline
+  const scrollRafRef = useRef<number | null>(null);
   const handleScroll = () => {
     if (!timelineRef.current || isProgrammaticScroll.current) return;
-    const scrollPos = timelineRef.current.scrollLeft;
-    const newTime = Math.max(0, Math.min(scrollPos / zoomLevel, project.duration));
-    setCurrentTime(newTime);
+    if (scrollRafRef.current) cancelAnimationFrame(scrollRafRef.current);
+
+    scrollRafRef.current = requestAnimationFrame(() => {
+      if (!timelineRef.current) return;
+      const scrollPos = timelineRef.current.scrollLeft;
+      const newTime = Math.max(0, Math.min(scrollPos / zoomLevel, project.duration));
+      setCurrentTime(newTime);
+    });
   };
 
   // Click on Timeline Ruler or Track Background to jump playhead position

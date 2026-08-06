@@ -74,15 +74,40 @@ export const PexelsMediaPanel: React.FC = () => {
 
       if (isVideo) {
         const video = document.createElement('video');
+        video.preload = 'auto';
+        video.muted = true;
         video.src = url;
         video.onloadedmetadata = () => {
           const duration = Math.max(1, Math.round(video.duration || 8));
+          video.currentTime = Math.min(1, duration / 2);
+        };
+        video.onseeked = () => {
+          try {
+            const canvas = document.createElement('canvas');
+            canvas.width = 160;
+            canvas.height = 90;
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+              ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+              const thumbnail = canvas.toDataURL('image/jpeg', 0.6);
+              const newItem: LocalUploadedMedia = {
+                id: 'upload_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+                name: file.name,
+                type: 'video',
+                url,
+                thumbnail,
+                duration: Math.max(1, Math.round(video.duration || 8)),
+              };
+              saveAndAddUpload(newItem);
+              return;
+            }
+          } catch (e) {}
           const newItem: LocalUploadedMedia = {
             id: 'upload_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
             name: file.name,
             type: 'video',
             url,
-            duration,
+            duration: Math.max(1, Math.round(video.duration || 8)),
           };
           saveAndAddUpload(newItem);
         };
@@ -125,7 +150,7 @@ export const PexelsMediaPanel: React.FC = () => {
       type: newItem.type,
       src: newItem.url,
       name: newItem.name,
-      thumbnail: newItem.type === 'image' ? newItem.url : undefined,
+      thumbnail: newItem.thumbnail || (newItem.type === 'image' ? newItem.url : undefined),
       duration: newItem.duration,
     });
 
